@@ -1,0 +1,25 @@
+export type MediaType = 'MOVIE' | 'SERIES' | 'ANIME';
+
+export interface MediaItem {
+  externalId: string;
+  type: MediaType;
+  source: string;
+  title: string;
+  originalTitle?: string;
+  overview?: string;
+  posterUrl?: string;
+  backdropUrl?: string;
+  releaseYear?: number;
+  totalSeasons?: number;
+  totalEpisodes?: number;
+}
+
+export interface MediaDetail extends MediaItem {
+  id?: string;
+  availableSeasons: number[];
+}
+
+export interface SearchMediaResponse {
+  items: MediaItem[];
+  total: number;
+}
