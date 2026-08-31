@@ -1,9 +1,11 @@
 package com.recapme.repository;
 
-import com.recapme.model.FeedbackModel;
+import com.recapme.model.Feedback;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
 
-public interface FeedbackRepository extends JpaRepository<FeedbackModel, UUID> {
+@Repository
+public interface FeedbackRepository extends JpaRepository<Feedback, UUID> {
 }

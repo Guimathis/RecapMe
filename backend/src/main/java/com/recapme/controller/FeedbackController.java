@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/feedbacks")
+@RequestMapping("/api/v1/feedbacks")
 @RequiredArgsConstructor
 @Tag(name = "Feedbacks", description = "Operações para envio e registro de feedbacks dos usuários")
 public class FeedbackController {
@@ -28,8 +28,8 @@ public class FeedbackController {
     private final FeedbackService feedbackService;
 
     @Operation(
-            summary = "Registrar feedback do usuário",
-            description = "Salva a avaliação (positiva ou negativa) e comentário opcional sobre a qualidade das recapitulações ou respostas do chat."
+            summary = "Registrar feedback de usuário",
+            description = "Salva a avaliação e comentários do usuário sobre a experiência com resumos, chats ou a plataforma."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -39,19 +39,19 @@ public class FeedbackController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Dados do feedback inválidos ou campos obrigatórios ausentes",
+                    description = "Dados da requisição inválidos",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProblemDetail.class))
             ),
             @ApiResponse(
                     responseCode = "500",
-                    description = "Erro interno no servidor ao salvar o feedback",
+                    description = "Erro interno no servidor",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProblemDetail.class))
             )
     })
     @PostMapping
     public ResponseEntity<SaveFeedbackResponseDto> saveFeedback(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Payload com tipo de contexto, avaliação (POSITIVE/NEGATIVE) e comentário opcional",
+                    description = "Payload contendo os dados do feedback",
                     required = true
             )
             @RequestBody @Valid SaveFeedbackRequestDto saveFeedbackRequestDto) {

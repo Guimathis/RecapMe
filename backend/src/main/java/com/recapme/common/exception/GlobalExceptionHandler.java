@@ -53,6 +53,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(ExternalIntegrationException.class)
+    public ProblemDetail handleExternalIntegration(ExternalIntegrationException ex) {
+        log.error("External service error: {}", ex.getMessage());
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, ex.getMessage());
+        problem.setTitle("External Service Error");
+        problem.setType(URI.create("urn:problem-type:external-service-error"));
+        problem.setProperty("timestamp", Instant.now());
+        return problem;
+    }
+
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex,

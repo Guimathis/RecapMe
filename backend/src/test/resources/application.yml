@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: recapme-backend-test
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+  cache:
+    type: none
+  ai:
+    google:
+      genai:
+        api-key: test-key
+
+recapme:
+  anilist:
+    endpoint: https://graphql.anilist.co
+  kitsu:
+    endpoint: https://kitsu.io/api/graphql
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:5173

@@ -1,8 +1,11 @@
 package com.recapme.service;
 
-import com.recapme.dto.request.ChatRequestDto;
+import com.recapme.dto.request.SendChatMessageRequestDto;
+import com.recapme.model.Media;
+import com.recapme.repository.MediaRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -17,29 +20,47 @@ public class ChatAiService {
 
     private final ChatClient chatClient;
     private final RecapService recapService;
+    private final MediaRepository mediaRepository;
 
     @Value("classpath:prompts/recap-chat.st")
     private Resource promptTemplateResource;
 
-    @Value("${spring.ai.openai.api-key:demo-key}")
-    private String openaiApiKey;
+    @Value("${spring.ai.google.genai.api-key:${GOOGLE_GENAI_APIKEY:}}")
+    private String geminiApiKey;
 
-    public ChatAiService(ChatClient.Builder chatClientBuilder, RecapService recapService) {
-        this.chatClient = chatClientBuilder.build();
+    @Autowired
+    public ChatAiService(
+            @Autowired(required = false) ChatClient.Builder chatClientBuilder,
+            RecapService recapService,
+            MediaRepository mediaRepository
+    ) {
+        if (chatClientBuilder != null) {
+            this.chatClient = chatClientBuilder.build();
+        } else {
+            this.chatClient = null;
+        }
         this.recapService = recapService;
+        this.mediaRepository = mediaRepository;
     }
 
-    public Flux<String> streamChat(ChatRequestDto request) {
+    public Flux<String> streamChat(SendChatMessageRequestDto request) {
+        Media media = mediaRepository.findById(request.mediaId()).orElse(null);
+        String mediaTitle = (media != null && media.getTitleEnglish() != null)
+                ? media.getTitleEnglish()
+                : (media != null ? media.getTitleRomaji() : "Obra");
+        String format = (media != null) ? media.getFormat() : "ANIME";
+
+        int seasonCutoff = (request.upToSeasonNumber() != null && request.upToSeasonNumber() > 0) ? request.upToSeasonNumber() : 1;
+        int episodeCutoff = (request.upToEpisodeNumber() != null && request.upToEpisodeNumber() > 0) ? request.upToEpisodeNumber() : 1;
+
         String authorizedContext = recapService.getAuthorizedContext(
-                request.getMediaType(),
-                request.getExternalId(),
-                request.getSeasonCutoff(),
-                request.getEpisodeCutoff()
+                request.mediaId(),
+                seasonCutoff,
+                episodeCutoff
         );
 
-        // Fallback simulado para desenvolvimento local se chave não estiver configurada
-        if ("demo-key".equalsIgnoreCase(openaiApiKey) || openaiApiKey.isBlank()) {
-            return generateMockStreamResponse(request, authorizedContext);
+        if (chatClient == null || geminiApiKey == null || geminiApiKey.isBlank() || "demo-key".equalsIgnoreCase(geminiApiKey)) {
+            return generateMockStreamResponse(mediaTitle, seasonCutoff, episodeCutoff, request.userMessage());
         }
 
         try {
@@ -47,26 +68,26 @@ public class ChatAiService {
 
             return chatClient.prompt()
                     .system(sp -> sp.text(systemPromptText)
-                            .param("mediaTitle", request.getTitle())
-                            .param("mediaType", request.getMediaType().name())
-                            .param("seasonCutoff", request.getSeasonCutoff())
-                            .param("episodeCutoff", request.getEpisodeCutoff())
+                            .param("mediaTitle", mediaTitle)
+                            .param("mediaType", format)
+                            .param("seasonCutoff", seasonCutoff)
+                            .param("episodeCutoff", episodeCutoff)
                             .param("authorizedRecapContext", authorizedContext))
-                    .user(request.getMessage())
+                    .user(request.userMessage())
                     .stream()
                     .content();
         } catch (Exception e) {
-            log.error("Erro ao chamar Spring AI ChatClient: {}", e.getMessage());
+            log.error("Error invoking Spring AI ChatClient: {}", e.getMessage());
             return Flux.just("Desculpe, ocorreu uma instabilidade na conexão com o modelo de IA. Por favor, tente novamente.");
         }
     }
 
-    private Flux<String> generateMockStreamResponse(ChatRequestDto request, String context) {
-        String simulated = "Olá! Como assistente do RecapMe para **" + request.getTitle() + 
-                "**, estou limitando minhas respostas rigorosamente até a **Temporada " + request.getSeasonCutoff() + 
-                ", Episódio " + request.getEpisodeCutoff() + "**.\n\n" +
-                "Com base no que você já viu: você perguntou sobre *\"" + request.getMessage() + "\"*.\n" +
-                "Até este momento da história, os eventos confirmados indicam que o enredo está focado nas tensões apresentadas nesses primeiros episódios sem revelar nenhum spoiler futuro!";
+    private Flux<String> generateMockStreamResponse(String mediaTitle, int seasonCutoff, int episodeCutoff, String userMessage) {
+        String simulated = "Olá! Como assistente do RecapMe para **" + mediaTitle +
+                "**, estou limitando minhas respostas rigorosamente até a **Temporada " + seasonCutoff +
+                ", Episódio " + episodeCutoff + "**.\n\n" +
+                "Com base no que você já assistiu: você perguntou sobre *\"" + userMessage + "\"*.\n" +
+                "Até este ponto da narrativa, os acontecimentos confirmados indicam o desenvolvimento do conflito atual sem revelar spoilers futuros além do corte configurado!";
 
         String[] words = simulated.split(" ");
         return Flux.interval(Duration.ofMillis(40))
