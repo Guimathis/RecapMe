@@ -101,6 +101,17 @@ public class KitsuDto {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class EpisodeTitles {
         private String canonical;
+        private String romanized;
+        private String original;
+        private String translated;
+
+        public String getPreferredTitle(int episodeNumber) {
+            if (canonical != null && !canonical.isBlank()) return canonical;
+            if (translated != null && !translated.isBlank()) return translated;
+            if (romanized != null && !romanized.isBlank()) return romanized;
+            if (original != null && !original.isBlank()) return original;
+            return "Episódio " + episodeNumber;
+        }
     }
 
     @Data

@@ -38,8 +38,8 @@ Ao aguardar a estreia de uma nova temporada ou continuação de um filme, muitos
 O **RecapMe** resolve essas dores através de:
 1. **🛡️ Trava Anti-Spoiler Visual e Semântica:** O usuário define até qual episódio/temporada assistiu. O sistema mascara visualmente resumos posteriores e injeta restrições rígidas no prompt da IA.
 2. **🤖 Chat Interativo Streaming com IA:** Faça perguntas pontuais (*"Como o personagem X conseguiu a espada no Ep. 4?"*) e receba respostas seguras e precisas via Server-Sent Events (SSE).
-3. **🔍 Busca Unificada:** Integração com **The Movie Database (TMDb)** para séries e filmes, e **Jikan API (MyAnimeList)** para animes.
-4. **⚡ Cache e Resiliência:** Resumos e metadados cacheados para respostas ultrarrápidas (< 100ms em leituras locais).
+3. **🔍 Catálogo Próprio e Ingestão Sob Demanda:** Ingestão desacoplada de **AniList GraphQL** (metadados e destaques) e **Kitsu GraphQL** (árvore de episódios) para banco local PostgreSQL com busca Full-Text `unaccent`.
+4. **⚡ Cache e Resiliência:** Resumos, metadados e seções da Home cacheados via Caffeine para respostas instantâneas (< 30ms em leituras locais).
 5. **🔒 Privacidade no MVP:** Sem login obrigatório; progresso e preferências são salvos de forma segura no navegador (`localStorage`).
 
 ---
@@ -47,8 +47,8 @@ O **RecapMe** resolve essas dores através de:
 ## ✨ Funcionalidades Principais
 
 ```
-[ Início / Busca Unificada ] 
-       │ (TMDb / Jikan)
+[ Home: Banner Hero / Trending / Popular / Top Rated ] 
+       │ (AniList + Kitsu Ingestion / PostgreSQL)
        ▼
 [ Página da Obra ] ──► [ Trava de Spoiler: "Assisti até T1 E5" ]
        │                                │
@@ -59,6 +59,7 @@ O **RecapMe** resolve essas dores através de:
        └──► [ Chat com IA (Streaming SSE) ] ──► Respostas restritas até T1 E5
 ```
 
+- **Home Dinâmica com Seções:** Banner Hero em destaque, Trending Now (Em Alta), Populares e Top Rated (All Time).
 - **Seletor de Progresso Anti-Spoiler:** Controle fino por temporada e episódio.
 - **Resumos Multicamada:** Visão panorâmica da temporada e lista detalhada por episódios.
 - **Chat Inteligente com IA:** Alimentado por Spring AI e Google Gemini / OpenAI.
@@ -72,11 +73,11 @@ O **RecapMe** resolve essas dores através de:
 ### **Backend (`/backend`)**
 - **Linguagem & Framework:** Java 21 + Spring Boot 4.x
 - **Inteligência Artificial:** Spring AI (`spring-ai-starter-model-google-genai` / OpenAI)
-- **Persistência & Banco de Dados:** Spring Data JPA, PostgreSQL, Flyway Migrations
-- **Cache:** Caffeine Cache + Spring Cache
-- **Comunicação HTTP:** Spring `RestClient` (consumo de TMDb e Jikan)
+- **Persistência & Banco de Dados:** Spring Data JPA, PostgreSQL (Neon / Local), Flyway Migrations, Extensão `unaccent`
+- **Cache:** Caffeine Cache + Spring Cache (`home-sections`, `media-details`)
+- **Comunicação HTTP / GraphQL:** Spring `RestClient` (consumo resiliente de AniList e Kitsu)
 - **Boilerplate & Validação:** Lombok, Jakarta Validation (`@Valid`)
-- **Padrões de API:** Richardson Nível 2 + RFC 7807 (`ProblemDetail`) para tratamento global de erros
+- **Padrões de API:** Richardson Nível 2 + RFC 7807 (`ProblemDetail`) + OpenAPI 3.0 (SpringDoc)
 
 ### **Frontend (`/frontend`)**
 - **Core:** React 18, TypeScript, Vite
@@ -169,7 +170,7 @@ cd recapme
 
 3. Preencha as variáveis de ambiente no arquivo `backend/.env`:
    ```properties
-   # Banco de Dados PostgreSQL
+   # Banco de Dados PostgreSQL (Neon / Local)
    DB_URL=jdbc:postgresql://localhost:5432/recapme-db
    DB_USERNAME=postgres
    DB_PASSWORD=sua_senha_aqui
@@ -178,13 +179,13 @@ cd recapme
 
    # Chaves de IA
    GOOGLE_GENAI_APIKEY=sua_chave_google_gemini_aqui
-   OPENAI_API_KEY=sua_chave_openai_opcional
 
-   # Provedor de Metadados
-   TMDB_API_KEY=sua_chave_tmdb_aqui
+   # Endpoints GraphQL
+   ANILIST_GRAPHQL_URL=https://graphql.anilist.co
+   KITSU_GRAPHQL_URL=https://kitsu.io/api/graphql
 
    # Configurações de CORS
-   CORS_ALLOWED_ORIGINS=http://localhost:5173
+   CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
    ```
 
 4. Execute a aplicação com o Maven Wrapper:
@@ -196,7 +197,7 @@ cd recapme
    .\mvnw.cmd spring-boot:run
    ```
 
-> A API iniciará por padrão em: `http://localhost:8080`
+> A API iniciará por padrão em: `http://localhost:8080` (Swagger UI em `http://localhost:8080/swagger-ui.html`)
 
 ---
 
@@ -225,9 +226,18 @@ cd recapme
 
 | Método | Endpoint | Descrição |
 | :--- | :--- | :--- |
-| `GET` | `/api/v1/medias/search?query={nome}&type={ALL\|SERIES\|ANIME\|MOVIE}` | Busca unificada de títulos (TMDb e Jikan). |
-| `GET` | `/api/v1/medias/{type}/{id}` | Detalhes completos da obra, temporadas e episódios. |
-| `GET` | `/api/v1/recaps/{type}/{id}` | Resumos estruturados da temporada e episódios. |
+| `GET` | `/api/v1/medias/home?perPage=10` | Seções da Home agregadas (Banner Hero, Trending Now, Popular e Top Rated) com cache. |
+| `GET` | `/api/v1/medias/trending?page=0&size=20` | Lista paginada de obras em alta no momento. |
+| `GET` | `/api/v1/medias/popular?page=0&size=20` | Lista paginada de obras populares. |
+| `GET` | `/api/v1/medias/top-rated?page=0&size=20` | Lista paginada de obras mais bem avaliadas de todos os tempos. |
+| `GET` | `/api/v1/medias?page=0&size=20` | Listagem com paginação e filtros no catálogo local. |
+| `GET` | `/api/v1/medias/search?query={termo}` | Busca textual Full-Text unaccent com Lazy Ingestion automática. |
+| `GET` | `/api/v1/medias/{id}` | Detalhes completos da obra, temporadas e episódios (por UUID). |
+| `POST`| `/api/v1/medias/ingest/{externalId}` | Força a ingestão/sincronização de uma obra pelo AniList ID. |
+| `GET` | `/api/v1/medias/{mediaId}/seasons` | Lista as temporadas cadastradas de uma obra. |
+| `GET` | `/api/v1/seasons/{seasonId}/episodes` | Lista todos os episódios de uma temporada. |
+| `GET` | `/api/v1/episodes/{id}` | Detalhes de um episódio específico. |
+| `GET` | `/api/v1/recaps/{scope}/{id}` | Resumos estruturados (escopo `SEASON` ou `EPISODE`). |
 | `POST`| `/api/v1/chats` | Chat conversacional com IA e limite de spoilers (Stream via SSE). |
 | `POST`| `/api/v1/feedbacks` | Registro de avaliação (útil/não útil) sobre resumos e respostas. |
 

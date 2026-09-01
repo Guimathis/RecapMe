@@ -42,14 +42,19 @@ public class MediaIngestionService {
         // Check if already in DB
         Optional<Media> existing = mediaRepository.findByAnilistId(anilistId);
         if (existing.isPresent()) {
-            return existing.get();
+            Media media = existing.get();
+            if (episodeRepository.countBySeasonMediaId(media.getId()) == 0) {
+                return ensureEpisodesIngested(media);
+            }
+            return media;
         }
 
         // 1. Fetch metadata from AniList
         AniListDto.MediaContainer aniData = aniListClient.getAnimeInfo(anilistId)
                 .orElseThrow(() -> new ResourceNotFoundException("Media not found in AniList with id " + anilistId));
 
-        return persistIngestedMedia(aniData);
+        Media media = persistOrUpdateSummary(aniData);
+        return ensureEpisodesIngested(media);
     }
 
     @Transactional
@@ -63,45 +68,26 @@ public class MediaIngestionService {
             return List.of();
         }
 
-        List<Media> savedMedias = new ArrayList<>();
-        for (AniListDto.MediaContainer container : results) {
-            if (container.getId() == null) continue;
-
-            Optional<Media> local = mediaRepository.findByAnilistId(container.getId());
-            if (local.isPresent()) {
-                savedMedias.add(local.get());
-            } else {
-                try {
-                    savedMedias.add(persistIngestedMedia(container));
-                } catch (Exception e) {
-                    log.warn("Failed to ingest anime {} ({}): {}", container.getId(),
-                            container.getTitle() != null ? container.getTitle().getRomaji() : "unknown",
-                            e.getMessage());
-                }
-            }
-        }
-
-        return savedMedias;
+        return syncMediaSummaries(results);
     }
 
-    private Media persistIngestedMedia(AniListDto.MediaContainer aniData) {
+    @Transactional
+    public Media persistOrUpdateSummary(AniListDto.MediaContainer aniData) {
+        if (aniData == null || aniData.getId() == null) {
+            return null;
+        }
+
+        Optional<Media> existing = mediaRepository.findByAnilistId(aniData.getId());
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+
         String romajiTitle = (aniData.getTitle() != null && aniData.getTitle().getRomaji() != null)
                 ? aniData.getTitle().getRomaji()
                 : (aniData.getTitle() != null ? aniData.getTitle().getEnglish() : "Unknown Title");
 
         String englishTitle = (aniData.getTitle() != null) ? aniData.getTitle().getEnglish() : null;
 
-        // 2. Fetch episode tree from Kitsu
-        Optional<KitsuDto.AnimeNode> kitsuNodeOpt = kitsuClient.getKitsuEpisodes(
-                englishTitle,
-                romajiTitle,
-                aniData.getSeason(),
-                aniData.getSeasonYear()
-        );
-
-        String kitsuId = kitsuNodeOpt.map(KitsuDto.AnimeNode::getId).filter(id -> !"-1".equals(id)).orElse(null);
-
-        // Build Media entity
         BigDecimal score = null;
         if (aniData.getMeanScore() != null) {
             score = BigDecimal.valueOf(aniData.getMeanScore() / 10.0).setScale(2, RoundingMode.HALF_UP);
@@ -110,7 +96,6 @@ public class MediaIngestionService {
         Instant now = Instant.now();
         Media media = Media.builder()
                 .anilistId(aniData.getId())
-                .kitsuId(kitsuId)
                 .titleRomaji(romajiTitle)
                 .titleEnglish(englishTitle)
                 .titlePortuguese(null)
@@ -129,16 +114,76 @@ public class MediaIngestionService {
                 .updatedAt(now)
                 .build();
 
-        Media savedMedia;
         try {
-            savedMedia = mediaRepository.saveAndFlush(media);
+            return mediaRepository.saveAndFlush(media);
         } catch (DataIntegrityViolationException ex) {
-            log.info("Media with anilistId {} was concurrently saved by another thread", aniData.getId());
             return mediaRepository.findByAnilistId(aniData.getId())
                     .orElseThrow(() -> ex);
         }
+    }
 
-        // 3. Build Season 1 & Episodes
+    @Transactional
+    public List<Media> syncMediaSummaries(List<AniListDto.MediaContainer> containers) {
+        if (containers == null || containers.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Media> result = new ArrayList<>();
+        for (AniListDto.MediaContainer container : containers) {
+            try {
+                Media m = persistOrUpdateSummary(container);
+                if (m != null) {
+                    result.add(m);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to persist summary for AniList ID {}: {}", container.getId(), e.getMessage());
+            }
+        }
+        return result;
+    }
+
+    @Transactional
+    public Media ensureEpisodesIngested(Media media) {
+        if (media == null) {
+            return null;
+        }
+
+        long existingEpCount = episodeRepository.countBySeasonMediaId(media.getId());
+        if (existingEpCount > 0) {
+            return media;
+        }
+
+        log.info("Ensuring episodes are ingested for media '{}' (ID: {}, AniList: {})",
+                media.getTitleRomaji(), media.getId(), media.getAnilistId());
+
+        AniListDto.MediaContainer aniData = null;
+        if (media.getAnilistId() != null) {
+            try {
+                aniData = aniListClient.getAnimeInfo(media.getAnilistId()).orElse(null);
+            } catch (Exception e) {
+                log.warn("Could not fetch AniList metadata for id {}: {}", media.getAnilistId(), e.getMessage());
+            }
+        }
+
+        String englishTitle = media.getTitleEnglish();
+        String romajiTitle = media.getTitleRomaji();
+        String seasonPeriod = media.getSeasonPeriod();
+        Integer seasonYear = media.getSeasonYear();
+        Integer aniEpisodes = aniData != null ? aniData.getEpisodes() : media.getTotalEpisodes();
+        Integer duration = aniData != null ? aniData.getDuration() : media.getDurationMinutes();
+
+        Optional<KitsuDto.AnimeNode> kitsuNodeOpt = kitsuClient.getKitsuEpisodes(
+                englishTitle,
+                romajiTitle,
+                seasonPeriod,
+                seasonYear
+        );
+
+        String kitsuId = kitsuNodeOpt.map(KitsuDto.AnimeNode::getId).filter(id -> !"-1".equals(id)).orElse(media.getKitsuId());
+        if (kitsuId != null && !Objects.equals(media.getKitsuId(), kitsuId)) {
+            media.setKitsuId(kitsuId);
+        }
+
         List<KitsuDto.EpisodeNode> episodeNodes = kitsuNodeOpt
                 .map(KitsuDto.AnimeNode::getEpisodes)
                 .map(KitsuDto.EpisodesConnection::getNodes)
@@ -146,22 +191,29 @@ public class MediaIngestionService {
 
         int episodeCount = !episodeNodes.isEmpty()
                 ? episodeNodes.size()
-                : (aniData.getEpisodes() != null ? aniData.getEpisodes() : 0);
+                : (aniEpisodes != null && aniEpisodes > 0 ? aniEpisodes : (media.getTotalEpisodes() != null ? media.getTotalEpisodes() : 0));
 
-        Season season = Season.builder()
-                .media(savedMedia)
-                .seasonNumber(1)
-                .title("Temporada 1")
-                .episodeCount(episodeCount)
-                .createdAt(now)
-                .build();
+        Instant now = Instant.now();
 
-        Season savedSeason;
-        try {
-            savedSeason = seasonRepository.saveAndFlush(season);
-        } catch (DataIntegrityViolationException ex) {
-            savedSeason = seasonRepository.findByMediaIdAndSeasonNumber(savedMedia.getId(), 1)
-                    .orElseThrow(() -> ex);
+        Season season = seasonRepository.findByMediaIdAndSeasonNumber(media.getId(), 1)
+                .orElseGet(() -> {
+                    Season newSeason = Season.builder()
+                            .media(media)
+                            .seasonNumber(1)
+                            .title("Temporada 1")
+                            .episodeCount(episodeCount)
+                            .createdAt(now)
+                            .build();
+                    try {
+                        return seasonRepository.saveAndFlush(newSeason);
+                    } catch (DataIntegrityViolationException ex) {
+                        return seasonRepository.findByMediaIdAndSeasonNumber(media.getId(), 1).orElseThrow(() -> ex);
+                    }
+                });
+
+        if (season.getEpisodeCount() == 0 && episodeCount > 0) {
+            season.setEpisodeCount(episodeCount);
+            seasonRepository.save(season);
         }
 
         if (!episodeNodes.isEmpty()) {
@@ -169,20 +221,24 @@ public class MediaIngestionService {
             for (KitsuDto.EpisodeNode node : episodeNodes) {
                 if (node == null || node.getNumber() == null) continue;
 
-                String epTitle = (node.getTitles() != null && node.getTitles().getCanonical() != null && !node.getTitles().getCanonical().isBlank())
-                        ? node.getTitles().getCanonical()
+                String epTitle = (node.getTitles() != null)
+                        ? node.getTitles().getPreferredTitle(node.getNumber())
                         : "Episódio " + node.getNumber();
 
                 String thumbnailUrl = (node.getThumbnail() != null && node.getThumbnail().getOriginal() != null)
                         ? node.getThumbnail().getOriginal().getUrl()
                         : null;
 
+                Integer epDuration = node.getLength() != null
+                        ? (node.getLength() > 100 ? node.getLength() / 60 : node.getLength())
+                        : duration;
+
                 Episode episode = Episode.builder()
-                        .season(savedSeason)
+                        .season(season)
                         .episodeNumber(node.getNumber())
                         .title(epTitle)
                         .thumbnailUrl(thumbnailUrl)
-                        .durationMinutes(node.getLength() != null ? node.getLength() : aniData.getDuration())
+                        .durationMinutes(epDuration)
                         .createdAt(now)
                         .build();
 
@@ -192,17 +248,16 @@ public class MediaIngestionService {
             try {
                 episodeRepository.saveAllAndFlush(episodesToSave);
             } catch (DataIntegrityViolationException ex) {
-                log.warn("Episodes for season {} were concurrently saved", savedSeason.getId());
+                log.warn("Episodes for season {} were concurrently saved", season.getId());
             }
         } else if (episodeCount > 0) {
-            // Create fallback placeholder episodes if count is known but nodes weren't on Kitsu
             List<Episode> fallbackEpisodes = new ArrayList<>();
             for (int i = 1; i <= Math.min(episodeCount, 100); i++) {
                 Episode episode = Episode.builder()
-                        .season(savedSeason)
+                        .season(season)
                         .episodeNumber(i)
                         .title("Episódio " + i)
-                        .durationMinutes(aniData.getDuration())
+                        .durationMinutes(duration)
                         .createdAt(now)
                         .build();
                 fallbackEpisodes.add(episode);
@@ -212,12 +267,10 @@ public class MediaIngestionService {
             } catch (DataIntegrityViolationException ignored) {}
         }
 
-        if (savedMedia.getTotalEpisodes() == 0 && episodeCount > 0) {
-            savedMedia.setTotalEpisodes(episodeCount);
-            mediaRepository.save(savedMedia);
+        if ((media.getTotalEpisodes() == null || media.getTotalEpisodes() == 0) && episodeCount > 0) {
+            media.setTotalEpisodes(episodeCount);
         }
-
-        return savedMedia;
+        return mediaRepository.save(media);
     }
 
     private String cleanHtmlDescription(String desc) {
