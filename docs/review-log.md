@@ -34,3 +34,38 @@
 
 * **Seções mais densas:** Lógica de negócio da IA / Trava Anti-Spoiler, integração com Spring AI via SSE e componentização rica do frontend.
 * **Próximos Passos:** Criação da estrutura dos diretórios `/frontend` e `/backend` e bootstrap dos projetos.
+
+---
+
+## 📅 Data: 28/08/2026
+### Documento:
+- [PRD_backend.md](file:///C:/Users/guima/OneDrive/Documentos/projects/recapme/docs/PRD_backend.md) (Refatoração da Arquitetura do Backend — Catálogo Relacional Local & Ingestão Sob Demanda)
+
+---
+
+### 🔍 Revisão Multi-Papéis (Multi-Role Review)
+
+* 🎯 **Perspectiva de Produto (Product):**
+  * **Eliminação de Dependência de Proxy:** A aplicação ganha soberania sobre os dados e elimina falhas/lentidões decorrentes de consultas síncronas a APIs externas de terceiros.
+  * **Escopo Estrito:** Autenticação descartada para esta fase; foco total no catálogo persistente, busca local e resumos/chats de IA sobre dados locais.
+  * **Experiência do Usuário:** Latência de navegação drasticamente reduzida (tempo de resposta P95 < 50ms para títulos já no banco).
+
+* 🎨 **Perspectiva de Design & Integração Frontend:**
+  * **Contrato de API Estável:** O frontend passa a consumir contratos uniformes (`/api/v1/medias`, `/api/v1/seasons`, `/api/v1/episodes`), com URLs de thumbnails e banners de alta definição já normalizadas.
+  * **Busca Otimizada:** Endpoint `/api/v1/medias/search` unificado, suportando busca tolerante a ausência de acentos.
+
+* 🔧 **Perspectiva de Engenharia (Engineering & Architecture):**
+  * **Ingestão Sob Demanda Inspirada no AnimeFlix:**
+    * **AniList GraphQL (`https://graphql.anilist.co`):** Metadados, capas, banners e pontuações.
+    * **Kitsu GraphQL (`https://kitsu.io/api/graphql`):** Árvore detalhada de episódios (títulos canônicos e thumbnails) com matching por título + temporada + ano.
+  * **Modelo Relacional Completo:** Mapeamento JPA com hierarquia `Media` ➔ `Season` ➔ `Episode` ➔ `Recap` em PostgreSQL com chaves `UUID` e integridade referencial.
+  * **Busca Full-Text com `unaccent`:** Configuração de extensão PostgreSQL e índice `GIN` para busca sem acentos em títulos (Romaji, English, Portuguese).
+  * **Conformidade Total com Padrões:** Richardson Nível 2, RFC 7807 (`ProblemDetail`), ausência de `try/catch` em controllers e migrações Flyway.
+
+---
+
+### 📝 Retrospectiva do Processo
+
+* **Seções mais fortes:** Mapeamento detalhado da hierarquia de entidades JPA, especificação precisa das queries GraphQL de AniList/Kitsu baseadas no repositório de referência e design de índices PostgreSQL com `unaccent`.
+* **Próximos Passos:** Alinhar o início do desenvolvimento backend com base na especificação do PRD v1.0 assim que aprovado pelo usuário.
+

@@ -44,3 +44,5 @@ backend/.env.*
 backend/*.class
 backend/*.jar
 backend/*.war
+.neon
+.env.local

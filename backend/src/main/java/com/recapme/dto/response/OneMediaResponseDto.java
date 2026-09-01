@@ -1,58 +1,72 @@
 package com.recapme.dto.response;
 
-import com.recapme.model.MediaType;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
-@Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "Detalhes completos de uma mídia consultada")
-public class OneMediaResponseDto implements Serializable {
+@Schema(description = "Detalhes completos de uma obra incluindo temporadas cadastradas")
+public record OneMediaResponseDto(
+        @Schema(description = "Identificador único da obra no banco local", example = "7fa85f64-5717-4562-b3fc-2c963f66afa6")
+        UUID id,
 
-    @Schema(description = "Identificador único interno da mídia na base de dados (se já persistida)", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
-    private String id;
+        @Schema(description = "Identificador no AniList", example = "16498")
+        Integer anilistId,
 
-    @Schema(description = "Identificador externo da obra no catálogo de origem", example = "1399")
-    private String externalId;
+        @Schema(description = "Identificador no Kitsu", example = "7442")
+        String kitsuId,
 
-    @Schema(description = "Tipo da obra", example = "SERIES")
-    private MediaType type;
+        @Schema(description = "Título em Romaji", example = "Shingeki no Kyojin")
+        String titleRomaji,
 
-    @Schema(description = "Provedor dos metadados da obra", example = "TMDB", allowableValues = {"TMDB", "JIKAN"})
-    private String source;
+        @Schema(description = "Título em Inglês", example = "Attack on Titan")
+        String titleEnglish,
 
-    @Schema(description = "Título da mídia em português ou formatado", example = "Game of Thrones")
-    private String title;
+        @Schema(description = "Título em Português se disponível", example = "Ataque dos Titãs")
+        String titlePortuguese,
 
-    @Schema(description = "Título original da obra", example = "Game of Thrones")
-    private String originalTitle;
+        @Schema(description = "Sinopse detalhada da obra", example = "Centenas de anos atrás...")
+        String synopsis,
 
-    @Schema(description = "Sinopse completa da obra", example = "Em uma terra onde os verões podem durar décadas e os invernos uma vida inteira...")
-    private String overview;
+        @Schema(description = "URL da imagem de capa em alta definição", example = "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx16498.jpg")
+        String coverImageUrl,
 
-    @Schema(description = "URL do poster da mídia", example = "https://image.tmdb.org/t/p/w500/u3bZgnGQ9T01sWNhyveQz0wH0Hl.jpg")
-    private String posterUrl;
+        @Schema(description = "URL do banner panorâmico", example = "https://s4.anilist.co/file/anilistcdn/media/anime/banner/16498.jpg")
+        String bannerImageUrl,
 
-    @Schema(description = "URL do backdrop / plano de fundo", example = "https://image.tmdb.org/t/p/original/2OMB0ynKlyIen9SuFsqwhBSQDIP.jpg")
-    private String backdropUrl;
+        @Schema(description = "Formato de exibição", example = "TV")
+        String format,
 
-    @Schema(description = "Ano de lançamento", example = "2011")
-    private Integer releaseYear;
+        @Schema(description = "Status de exibição", example = "FINISHED")
+        String status,
 
-    @Schema(description = "Total de temporadas da obra", example = "8")
-    private Integer totalSeasons;
+        @Schema(description = "Nota média de avaliação", example = "8.65")
+        BigDecimal score,
 
-    @Schema(description = "Total de episódios da obra", example = "73")
-    private Integer totalEpisodes;
+        @Schema(description = "Ano de lançamento", example = "2013")
+        Integer seasonYear,
 
-    @Schema(description = "Lista contendo os números das temporadas disponíveis", example = "[1, 2, 3, 4, 5, 6, 7, 8]")
-    private List<Integer> availableSeasons;
+        @Schema(description = "Período sazonal de lançamento (WINTER, SPRING, SUMMER, FALL)", example = "SPRING")
+        String seasonPeriod,
+
+        @Schema(description = "Duração média em minutos por episódio", example = "24")
+        Integer durationMinutes,
+
+        @Schema(description = "Total de episódios cadastrados", example = "25")
+        Integer totalEpisodes,
+
+        @Schema(description = "Lista de gêneros da obra", example = "[\"Action\", \"Drama\", \"Fantasy\"]")
+        Set<String> genres,
+
+        @Schema(description = "Lista de temporadas cadastradas para a obra")
+        List<SeasonSummaryDto> seasons
+) implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
 }
