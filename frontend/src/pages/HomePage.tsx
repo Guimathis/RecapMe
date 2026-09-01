@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles, History, Flame } from 'lucide-react';
-import { SearchBar } from '@/components/common/SearchBar';
+import { History, Flame, Star } from 'lucide-react';
+import { HeroSection } from '@/components/landing/HeroSection';
 import { MediaCard } from '@/components/media/MediaCard';
 import { useRecentStore } from '@/stores/useRecentStore';
 import { MediaItem } from '@/types/media';
@@ -10,6 +10,8 @@ export const HomePage: React.FC = () => {
   const { recents } = useRecentStore();
   const [popularMedias, setPopularMedias] = useState<MediaItem[]>([]);
   const [loadingPopular, setLoadingPopular] = useState(true);
+  const [mostRatedMedias, setMostRatedMedias] = useState<MediaItem[]>([]);
+  const [loadingMostRated, setLoadingMostRated] = useState(true);
 
   useEffect(() => {
     // Carregar destaques populares iniciais
@@ -25,38 +27,49 @@ export const HomePage: React.FC = () => {
         setLoadingPopular(false);
       }
     };
+
+    // Carregar mais bem avaliados
+    const fetchMostRated = async () => {
+      try {
+        const breaking = await mediaService.search('Breaking Bad');
+        const arcane = await mediaService.search('Arcane');
+        const combined = [...(breaking.items || []), ...(arcane.items || [])].slice(0, 8);
+        setMostRatedMedias(combined);
+      } catch (e) {
+        console.warn('Erro ao carregar mais bem avaliados:', e);
+      } finally {
+        setLoadingMostRated(false);
+      }
+    };
+
     fetchPopular();
+    fetchMostRated();
+  }, []);
+
+  useEffect(() => {
+    if (window.location.hash) {
+      const hash = window.location.hash;
+      if (hash === '#search-section' || hash === '#search') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => {
+          const input = document.querySelector('#search-section input') as HTMLInputElement;
+          if (input) input.focus();
+        }, 400);
+      } else {
+        setTimeout(() => {
+          const el = document.querySelector(hash);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 300);
+      }
+    }
   }, []);
 
   return (
-    <div className="space-y-12 pb-16">
-      {/* Hero Section */}
-      <section className="relative pt-12 pb-8 text-center px-4">
-        {/* Glow de fundo */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-600/10 border border-purple-500/30 text-purple-300 text-xs font-semibold">
-            <Sparkles className="h-3.5 w-3.5 text-purple-400 animate-spin" />
-            <span>Recapitule suas obras favoritas sem risco de spoilers</span>
-          </div>
-
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-foreground">
-            Lançou nova temporada e você{' '}
-            <span className="bg-gradient-to-r from-purple-400 via-indigo-300 to-pink-400 bg-clip-text text-transparent">
-              não lembra de nada?
-            </span>
-          </h1>
-
-          <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Consulte resumos estruturados por temporada e episódio, e converse com a IA com uma trava inteligente que impede spoilers do futuro da trama.
-          </p>
-
-          <div className="pt-4">
-            <SearchBar />
-          </div>
-        </div>
-      </section>
+    <div className="space-y-16 pb-20">
+      {/* Hero Section Imersivo com Sneak Peek */}
+      <HeroSection trendingItems={popularMedias} isLoadingTrending={loadingPopular} />
 
       {/* Seção: Obras Recentes / Continuar de Onde Parou */}
       {recents.length > 0 && (
@@ -75,14 +88,14 @@ export const HomePage: React.FC = () => {
       )}
 
       {/* Seção: Obras em Destaque */}
-      <section className="container max-w-7xl mx-auto px-4 sm:px-8">
+      <section className="container max-w-7xl mx-auto px-4 sm:px-8 scroll-mt-28" id="popular">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2.5 text-purple-400">
             <Flame className="h-5 w-5 text-orange-400" />
-            <h2 className="text-xl font-bold text-foreground">Obras em Alta para Recapitular</h2>
+            <h2 className="text-xl font-bold text-foreground">Obras Populares para Recapitular</h2>
           </div>
           <span className="text-xs text-muted-foreground hidden sm:inline">
-            Séries & Animes populares
+            Séries, Animes & Filmes
           </span>
         </div>
 
@@ -101,6 +114,37 @@ export const HomePage: React.FC = () => {
         ) : (
           <div className="p-8 rounded-2xl glass text-center text-sm text-muted-foreground">
             Use a barra de pesquisa acima para encontrar qualquer anime, série ou filme!
+          </div>
+        )}
+      </section>
+
+      {/* Seção: Mais Bem Avaliados */}
+      <section className="container max-w-7xl mx-auto px-4 sm:px-8 scroll-mt-28" id="most-rated">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2.5 text-yellow-400">
+            <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+            <h2 className="text-xl font-bold text-foreground">Mais Bem Avaliados</h2>
+          </div>
+          <span className="text-xs text-muted-foreground hidden sm:inline">
+            Aclamados pela crítica e público
+          </span>
+        </div>
+
+        {loadingMostRated ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <div key={idx} className="aspect-[2/3] rounded-2xl bg-muted/40 animate-pulse" />
+            ))}
+          </div>
+        ) : mostRatedMedias.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+            {mostRatedMedias.map((item) => (
+              <MediaCard key={`most-rated-${item.type}-${item.externalId}`} media={item} />
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 rounded-2xl glass text-center text-sm text-muted-foreground">
+            Nenhuma obra encontrada.
           </div>
         )}
       </section>

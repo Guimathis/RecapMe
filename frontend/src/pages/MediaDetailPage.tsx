@@ -112,7 +112,7 @@ export const MediaDetailPage: React.FC = () => {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
 
-        <div className="container max-w-7xl mx-auto px-4 sm:px-8 relative pt-8 pb-12 flex flex-col justify-between min-h-[360px] md:min-h-[420px]">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-8 relative pt-24 pb-12 flex flex-col justify-between min-h-[400px] md:min-h-[460px]">
           {/* Botão de Voltar */}
           <div>
             <Link
