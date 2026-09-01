@@ -27,6 +27,7 @@ spring:
       - search-medias
       - media-details
       - season-recaps
+      - home-sections
     caffeine:
       spec: maximumSize=500,expireAfterWrite=30m,recordStats
 

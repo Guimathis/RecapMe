@@ -89,4 +89,110 @@ class AniListClientTest {
         assertThat(results).hasSize(1);
         assertThat(results.get(0).getId()).isEqualTo(16498);
     }
+
+    @Test
+    @DisplayName("getHomeSections deve retornar DataContainer com banner, trending, popular e topRated")
+    void shouldGetHomeSectionsSuccessfully() {
+        AniListDto.MediaContainer bannerMedia = AniListDto.MediaContainer.builder()
+                .id(16498)
+                .title(new AniListDto.Title("Shingeki no Kyojin", "Attack on Titan"))
+                .build();
+        AniListDto.MediaContainer trendingMedia = AniListDto.MediaContainer.builder()
+                .id(113415)
+                .title(new AniListDto.Title("Jujutsu Kaisen", "Jujutsu Kaisen"))
+                .build();
+
+        AniListDto.GraphQLResponse graphQLResponse = new AniListDto.GraphQLResponse();
+        AniListDto.DataContainer dataContainer = new AniListDto.DataContainer();
+        dataContainer.setBanner(bannerMedia);
+        dataContainer.setTrending(new AniListDto.PageContainer(List.of(trendingMedia)));
+        dataContainer.setPopular(new AniListDto.PageContainer(List.of(bannerMedia)));
+        dataContainer.setTopRated(new AniListDto.PageContainer(List.of(bannerMedia)));
+        graphQLResponse.setData(dataContainer);
+
+        when(anilistRestClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any(Object.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.body(AniListDto.GraphQLResponse.class)).thenReturn(graphQLResponse);
+
+        AniListDto.DataContainer result = aniListClient.getHomeSections(10, 2024);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getBanner()).isNotNull();
+        assertThat(result.getBanner().getId()).isEqualTo(16498);
+        assertThat(result.getTrending().getMedia()).hasSize(1);
+        assertThat(result.getTrending().getMedia().get(0).getId()).isEqualTo(113415);
+    }
+
+    @Test
+    @DisplayName("getTrending deve retornar lista de animes em alta")
+    void shouldGetTrendingSuccessfully() {
+        AniListDto.MediaContainer media = AniListDto.MediaContainer.builder()
+                .id(113415)
+                .title(new AniListDto.Title("Jujutsu Kaisen", "Jujutsu Kaisen"))
+                .build();
+
+        AniListDto.GraphQLResponse graphQLResponse = new AniListDto.GraphQLResponse();
+        AniListDto.DataContainer dataContainer = new AniListDto.DataContainer();
+        dataContainer.setPage(new AniListDto.PageContainer(List.of(media)));
+        graphQLResponse.setData(dataContainer);
+
+        when(anilistRestClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any(Object.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.body(AniListDto.GraphQLResponse.class)).thenReturn(graphQLResponse);
+
+        List<AniListDto.MediaContainer> results = aniListClient.getTrending(1, 10);
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getId()).isEqualTo(113415);
+    }
+
+    @Test
+    @DisplayName("getPopular deve retornar lista de animes populares")
+    void shouldGetPopularSuccessfully() {
+        AniListDto.MediaContainer media = AniListDto.MediaContainer.builder()
+                .id(16498)
+                .title(new AniListDto.Title("Shingeki no Kyojin", "Attack on Titan"))
+                .build();
+
+        AniListDto.GraphQLResponse graphQLResponse = new AniListDto.GraphQLResponse();
+        AniListDto.DataContainer dataContainer = new AniListDto.DataContainer();
+        dataContainer.setPage(new AniListDto.PageContainer(List.of(media)));
+        graphQLResponse.setData(dataContainer);
+
+        when(anilistRestClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any(Object.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.body(AniListDto.GraphQLResponse.class)).thenReturn(graphQLResponse);
+
+        List<AniListDto.MediaContainer> results = aniListClient.getPopular(1, 10);
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getId()).isEqualTo(16498);
+    }
+
+    @Test
+    @DisplayName("getTopRated deve retornar lista de animes mais bem avaliados")
+    void shouldGetTopRatedSuccessfully() {
+        AniListDto.MediaContainer media = AniListDto.MediaContainer.builder()
+                .id(5114)
+                .title(new AniListDto.Title("Fullmetal Alchemist: Brotherhood", "Fullmetal Alchemist: Brotherhood"))
+                .build();
+
+        AniListDto.GraphQLResponse graphQLResponse = new AniListDto.GraphQLResponse();
+        AniListDto.DataContainer dataContainer = new AniListDto.DataContainer();
+        dataContainer.setPage(new AniListDto.PageContainer(List.of(media)));
+        graphQLResponse.setData(dataContainer);
+
+        when(anilistRestClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any(Object.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.body(AniListDto.GraphQLResponse.class)).thenReturn(graphQLResponse);
+
+        List<AniListDto.MediaContainer> results = aniListClient.getTopRated(1, 10);
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getId()).isEqualTo(5114);
+    }
 }

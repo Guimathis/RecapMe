@@ -50,7 +50,7 @@ class KitsuClientTest {
                 .episodes(new KitsuDto.EpisodesConnection(List.of(
                         KitsuDto.EpisodeNode.builder()
                                 .number(1)
-                                .titles(new KitsuDto.EpisodeTitles("To You, in 2000 Years"))
+                                .titles(KitsuDto.EpisodeTitles.builder().canonical("To You, in 2000 Years").build())
                                 .build()
                 )))
                 .build();

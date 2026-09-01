@@ -27,7 +27,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -80,7 +83,7 @@ class MediaIngestionServiceTest {
                 .episodes(new KitsuDto.EpisodesConnection(List.of(
                         KitsuDto.EpisodeNode.builder()
                                 .number(1)
-                                .titles(new KitsuDto.EpisodeTitles("To You, in 2000 Years"))
+                                .titles(KitsuDto.EpisodeTitles.builder().canonical("To You, in 2000 Years").build())
                                 .thumbnail(new KitsuDto.EpisodeThumbnail(new KitsuDto.ThumbnailOriginal("thumb.jpg")))
                                 .length(24)
                                 .build()
@@ -89,14 +92,75 @@ class MediaIngestionServiceTest {
     }
 
     @Test
-    @DisplayName("ingestByAnilistId deve retornar mídia existente se já cadastrada")
+    @DisplayName("searchAndIngest deve persistir apenas resumos e NUNCA consultar Kitsu ou criar episódios")
+    void shouldSearchAndPersistSummariesWithoutCallingKitsu() {
+        when(aniListClient.searchAnime("shingeki", 1, 10)).thenReturn(List.of(aniContainer));
+        when(mediaRepository.findByAnilistId(16498)).thenReturn(Optional.empty());
+        when(mediaRepository.saveAndFlush(any(Media.class))).thenAnswer(inv -> {
+            Media m = inv.getArgument(0);
+            m.setId(UUID.randomUUID());
+            return m;
+        });
+
+        List<Media> result = ingestionService.searchAndIngest("shingeki");
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().getTitleRomaji()).isEqualTo("Shingeki no Kyojin");
+        assertThat(result.getFirst().getAnilistId()).isEqualTo(16498);
+
+        // Kitsu e EpisodeRepository NUNCA devem ser chamados na busca
+        verifyNoInteractions(kitsuClient);
+        verify(episodeRepository, never()).saveAllAndFlush(anyList());
+        verify(seasonRepository, never()).saveAndFlush(any(Season.class));
+    }
+
+    @Test
+    @DisplayName("searchAndIngest com query em branco ou nula deve retornar lista vazia sem chamar AniList")
+    void shouldReturnEmptyListForBlankKeyword() {
+        List<Media> result = ingestionService.searchAndIngest("   ");
+        assertThat(result).isEmpty();
+        verifyNoInteractions(aniListClient);
+    }
+
+    @Test
+    @DisplayName("ingestByAnilistId deve retornar mídia existente se já cadastrada com episódios")
     void shouldReturnExistingMedia() {
-        Media existing = Media.builder().id(UUID.randomUUID()).anilistId(16498).build();
+        UUID id = UUID.randomUUID();
+        Media existing = Media.builder().id(id).anilistId(16498).build();
         when(mediaRepository.findByAnilistId(16498)).thenReturn(Optional.of(existing));
+        when(episodeRepository.countBySeasonMediaId(id)).thenReturn(5L);
 
         Media result = ingestionService.ingestByAnilistId(16498);
 
         assertThat(result).isSameAs(existing);
+    }
+
+    @Test
+    @DisplayName("ingestByAnilistId deve enriquecer episódios se mídia existente não possuir episódios")
+    void shouldEnsureEpisodesWhenExistingMediaHasNoEpisodes() {
+        UUID id = UUID.randomUUID();
+        Media existing = Media.builder()
+                .id(id)
+                .anilistId(16498)
+                .titleRomaji("Shingeki no Kyojin")
+                .titleEnglish("Attack on Titan")
+                .seasonPeriod("SPRING")
+                .seasonYear(2013)
+                .totalEpisodes(25)
+                .build();
+
+        when(mediaRepository.findByAnilistId(16498)).thenReturn(Optional.of(existing));
+        when(episodeRepository.countBySeasonMediaId(id)).thenReturn(0L);
+        when(kitsuClient.getKitsuEpisodes("Attack on Titan", "Shingeki no Kyojin", "SPRING", 2013))
+                .thenReturn(Optional.of(kitsuNode));
+        when(seasonRepository.findByMediaIdAndSeasonNumber(id, 1)).thenReturn(Optional.empty());
+        when(seasonRepository.saveAndFlush(any(Season.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mediaRepository.save(any(Media.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Media result = ingestionService.ingestByAnilistId(16498);
+
+        assertThat(result).isSameAs(existing);
+        verify(episodeRepository).saveAllAndFlush(anyList());
     }
 
     @Test
@@ -113,11 +177,13 @@ class MediaIngestionServiceTest {
             return m;
         });
 
+        when(seasonRepository.findByMediaIdAndSeasonNumber(any(), eq(1))).thenReturn(Optional.empty());
         when(seasonRepository.saveAndFlush(any(Season.class))).thenAnswer(inv -> {
             Season s = inv.getArgument(0);
             s.setId(UUID.randomUUID());
             return s;
         });
+        when(mediaRepository.save(any(Media.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Media result = ingestionService.ingestByAnilistId(16498);
 

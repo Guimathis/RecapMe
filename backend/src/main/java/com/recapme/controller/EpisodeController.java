@@ -52,7 +52,7 @@ public class EpisodeController {
     @GetMapping("/{id}")
     public ResponseEntity<OneEpisodeResponseDto> getOneEpisode(
             @Parameter(description = "Identificador único UUID do episódio", required = true, example = "9bb95f64-5717-4562-b3fc-2c963f66af22")
-            @PathVariable(value = "id") UUID id) {
+            @   PathVariable(value = "id") UUID id) {
         OneEpisodeResponseDto response = episodeService.getById(id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
