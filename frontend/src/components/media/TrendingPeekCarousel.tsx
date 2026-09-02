@@ -1,8 +1,7 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Film, Tv, Sparkles } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { MediaItem } from '@/types/media';
-import { Badge } from '@/components/ui/badge';
+import { MediaCard } from '@/components/media/MediaCard';
 import { cn } from '@/lib/utils';
 
 // Dados populares de fallback de alta qualidade caso a API esteja carregando
@@ -98,77 +97,6 @@ interface TrendingPeekCarouselProps {
   isLoading?: boolean;
 }
 
-const TrendingCard: React.FC<{ item: MediaItem }> = ({ item }) => {
-  const navigate = useNavigate();
-  const [imgError, setImgError] = useState(false);
-
-  return (
-    <div
-      onClick={() => navigate(`/media/${item.type}/${item.externalId}`)}
-      className="flex-shrink-0 w-36 sm:w-44 md:w-48 group cursor-pointer snap-start relative rounded-2xl overflow-hidden bg-black/40 border border-white/10 hover:border-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 transform hover:-translate-y-1.5"
-    >
-      {/* Poster Image */}
-      <div className="aspect-[2/3] w-full overflow-hidden relative bg-neutral-900">
-        {!imgError && item.posterUrl ? (
-          <img
-            src={item.posterUrl}
-            alt={item.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-gradient-to-br from-neutral-800 to-neutral-950 text-white/50">
-            {item.type === 'ANIME' ? (
-              <Sparkles className="h-8 w-8 text-pink-400/60 mb-2" />
-            ) : (
-              <Film className="h-8 w-8 text-purple-400/60 mb-2" />
-            )}
-            <span className="text-xs font-semibold text-white/70 line-clamp-2">{item.title}</span>
-          </div>
-        )}
-
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
-
-        {/* Top Badges */}
-        <div className="absolute top-2 left-2 right-2 flex items-center justify-between">
-          <Badge
-            variant="outline"
-            className="text-[10px] uppercase font-bold py-0.5 px-2 bg-black/60 backdrop-blur-md border-white/20 text-white"
-          >
-            {item.type === 'ANIME' ? (
-              <span className="flex items-center gap-1">
-                <Sparkles className="h-2.5 w-2.5 text-pink-400" /> Anime
-              </span>
-            ) : (
-              <span className="flex items-center gap-1">
-                <Tv className="h-2.5 w-2.5 text-purple-400" /> Série
-              </span>
-            )}
-          </Badge>
-          {item.releaseYear && (
-            <span className="text-[11px] font-mono font-medium text-white/80 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded-md border border-white/10">
-              {item.releaseYear}
-            </span>
-          )}
-        </div>
-
-        {/* Bottom Title & Details */}
-        <div className="absolute bottom-2.5 left-2.5 right-2.5">
-          <h3 className="text-sm font-bold text-white leading-tight truncate group-hover:text-purple-300 transition-colors">
-            {item.title}
-          </h3>
-          <div className="flex items-center justify-between mt-1 text-[11px] text-white/60">
-            <span>{item.totalSeasons ? `${item.totalSeasons} Temporadas` : 'Resumos IA'}</span>
-            <span className="text-purple-400 font-semibold group-hover:underline">Ver ➔</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export const TrendingPeekCarousel: React.FC<TrendingPeekCarouselProps> = ({
   items,
   isLoading = false,
@@ -201,108 +129,66 @@ export const TrendingPeekCarousel: React.FC<TrendingPeekCarouselProps> = ({
 
   const handleScroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = direction === 'left' ? -350 : 350;
+      const cardEl = scrollRef.current.querySelector('.snap-start') as HTMLElement;
+      const cardWidth = cardEl ? cardEl.offsetWidth + 24 : 240;
+      const scrollAmount = direction === 'left' ? -cardWidth * 2 : cardWidth * 2;
       scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
 
-  const maskStyle = useMemo(() => {
-    if (canScrollLeft && canScrollRight) {
-      return {
-        WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 36px, black calc(100% - 64px), transparent 100%)',
-        maskImage: 'linear-gradient(to right, transparent 0%, black 36px, black calc(100% - 64px), transparent 100%)',
-      };
-    }
-    if (!canScrollLeft && canScrollRight) {
-      return {
-        WebkitMaskImage: 'linear-gradient(to right, black calc(100% - 72px), transparent 100%)',
-        maskImage: 'linear-gradient(to right, black calc(100% - 72px), transparent 100%)',
-      };
-    }
-    if (canScrollLeft && !canScrollRight) {
-      return {
-        WebkitMaskImage: 'linear-gradient(to left, black calc(100% - 40px), transparent 100%)',
-        maskImage: 'linear-gradient(to left, black calc(100% - 40px), transparent 100%)',
-      };
-    }
-    return {};
-  }, [canScrollLeft, canScrollRight]);
-
   return (
-    <div className="w-full relative select-none scroll-mt-28" id="trending">
-      {/* Header do Sneak Peek */}
-      <div className="flex items-center justify-between mb-3 px-1">
-        <div className="flex items-center gap-2.5">
-          <div>
-            <h2 className="text-lg md:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-              Em alta
-            </h2>
-          </div>
-        </div>
+    <div className="w-full relative select-none scroll-mt-28 py-6" id="trending">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 px-1">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
+          Animes e Séries em alta no Brasil
+        </h2>
 
         {/* Navigation Arrows */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => handleScroll('left')}
             disabled={!canScrollLeft}
             className={cn(
-              "p-1.5 rounded-lg bg-white/5 border border-white/10 text-white/70 transition-all",
-              canScrollLeft ? "hover:bg-white/10 hover:text-white cursor-pointer" : "opacity-30 cursor-not-allowed"
+              "p-2 rounded-full bg-brand-card border border-brand-border text-white transition-all",
+              canScrollLeft ? "hover:bg-brand-purple hover:border-brand-purple cursor-pointer shadow-lg" : "opacity-30 cursor-not-allowed"
             )}
             aria-label="Anterior"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-5 w-5" />
           </button>
           <button
             onClick={() => handleScroll('right')}
             disabled={!canScrollRight}
             className={cn(
-              "p-1.5 rounded-lg bg-white/5 border border-white/10 text-white/70 transition-all",
-              canScrollRight ? "hover:bg-white/10 hover:text-white cursor-pointer" : "opacity-30 cursor-not-allowed"
+              "p-2 rounded-full bg-brand-card border border-brand-border text-white transition-all",
+              canScrollRight ? "hover:bg-brand-purple hover:border-brand-purple cursor-pointer shadow-lg" : "opacity-30 cursor-not-allowed"
             )}
             aria-label="Próximo"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-5 w-5" />
           </button>
         </div>
       </div>
 
-      {/* Carrossel Horizontal com efeito Peek e máscara de fade suave */}
+      {/* Carrossel Horizontal com efeito Peek e tamanho proporcional às outras seções */}
       <div className="relative">
-        {/* Side fade overlays for extra depth */}
-        <div
-          className={cn(
-            "pointer-events-none absolute left-0 top-0 bottom-0 w-8 sm:w-14 bg-gradient-to-r from-black/90 via-black/40 to-transparent z-20 transition-opacity duration-300",
-            canScrollLeft ? "opacity-100" : "opacity-0"
-          )}
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute right-0 top-0 bottom-0 w-12 sm:w-20 bg-gradient-to-l from-black/90 via-black/40 to-transparent z-20 transition-opacity duration-300",
-            canScrollRight ? "opacity-100" : "opacity-0"
-          )}
-        />
-
         <div
           ref={scrollRef}
-          style={{
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            ...maskStyle,
-          }}
-          className="flex gap-4 overflow-x-auto scrollbar-none pb-3 pt-1 px-1 snap-x snap-mandatory transition-all"
+          className="flex gap-4 md:gap-6 overflow-x-auto hide-scrollbar pb-4 pt-1 px-1 snap-x snap-mandatory transition-all"
         >
           {isLoading
             ? Array.from({ length: 6 }).map((_, idx) => (
                 <div
                   key={`skeleton-${idx}`}
-                  className="flex-shrink-0 w-36 sm:w-44 md:w-48 aspect-[2/3] rounded-2xl bg-white/5 animate-pulse border border-white/10"
+                  className="w-[160px] sm:w-[190px] md:w-[215px] lg:w-[227px] flex-shrink-0 snap-start aspect-[2/3] rounded-2xl bg-brand-card border border-brand-border animate-pulse"
                 />
               ))
             : displayItems.map((item) => (
-                <TrendingCard
+                <MediaCard
                   key={`trending-${item.type}-${item.externalId}`}
-                  item={item}
+                  media={item}
+                  className="w-[160px] sm:w-[190px] md:w-[215px] lg:w-[227px] flex-shrink-0 snap-start"
                 />
               ))}
         </div>

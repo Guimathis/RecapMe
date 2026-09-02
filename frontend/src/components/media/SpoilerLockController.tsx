@@ -46,62 +46,64 @@ export const SpoilerLockController: React.FC<SpoilerLockControllerProps> = ({
   };
 
   return (
-    <div className="rounded-2xl glass-card p-4 sm:p-5 border border-purple-500/30 shadow-xl shadow-purple-900/10">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+    <div className="rounded-2xl bg-brand-card p-5 sm:p-6 border border-brand-border shadow-2xl">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
         {/* Informação e Status da Trava */}
-        <div className="flex items-center gap-3">
-          <div className="h-11 w-11 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+        <div className="flex items-center gap-3.5">
+          <div className="h-12 w-12 rounded-2xl bg-brand-purple/20 border border-brand-purple/40 flex items-center justify-center text-brand-purple shrink-0 shadow-lg shadow-brand-purple/20">
             {currentProgress.unlockedAll ? (
               <ShieldAlert className="h-6 w-6 text-amber-400" />
             ) : (
-              <ShieldCheck className="h-6 w-6 text-emerald-400" />
+              <ShieldCheck className="h-6 w-6 text-brand-purple" />
             )}
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h4 className="font-bold text-sm sm:text-base text-foreground">
+            <div className="flex flex-wrap items-center gap-2">
+              <h4 className="font-bold text-base sm:text-lg text-white">
                 Trava Anti-Spoiler Inteligente
               </h4>
               {currentProgress.unlockedAll ? (
-                <Badge variant="warning">⚠️ Sem Restrições (Tudo Liberado)</Badge>
+                <Badge variant="warning" className="bg-amber-500/20 text-amber-300 border-amber-500/40">
+                  Sem Restrições (Tudo Liberado)
+                </Badge>
               ) : (
-                <Badge variant="success">
-                  🛡️ Protegido até T{currentProgress.season} E{currentProgress.episode}
+                <Badge variant="success" className="bg-brand-purple/20 text-brand-purple border-brand-purple/40">
+                  Protegido até T{currentProgress.season} E{currentProgress.episode}
                 </Badge>
               )}
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs sm:text-sm text-gray-400 mt-1 font-light">
               Defina até onde você assistiu para mascarar spoilers na tela e restringir as respostas do Chat com IA.
             </p>
           </div>
         </div>
 
         {/* Seletores de Temporada e Episódio */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-          <div className="flex items-center gap-1.5 bg-background/80 border border-border/80 rounded-xl px-3 py-1.5 shadow-sm">
-            <span className="text-xs text-muted-foreground font-medium">Temporada:</span>
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+          <div className="flex items-center gap-2 bg-[#0d0d14] border border-brand-border rounded-xl px-3.5 py-2 shadow-sm">
+            <span className="text-xs text-gray-400 font-medium">Temporada:</span>
             <select
               value={currentProgress.season}
               onChange={handleSeasonSelect}
-              className="bg-transparent text-xs sm:text-sm font-bold text-purple-400 outline-none cursor-pointer"
+              className="bg-transparent text-xs sm:text-sm font-bold text-brand-purple outline-none cursor-pointer"
             >
               {Array.from({ length: Math.max(totalSeasons, 1) }, (_, i) => i + 1).map((s) => (
-                <option key={s} value={s} className="bg-card text-foreground">
+                <option key={s} value={s} className="bg-brand-card text-white">
                   Temporada {s}
                 </option>
               ))}
             </select>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-background/80 border border-border/80 rounded-xl px-3 py-1.5 shadow-sm">
-            <span className="text-xs text-muted-foreground font-medium">Episódio:</span>
+          <div className="flex items-center gap-2 bg-[#0d0d14] border border-brand-border rounded-xl px-3.5 py-2 shadow-sm">
+            <span className="text-xs text-gray-400 font-medium">Episódio:</span>
             <select
               value={currentProgress.episode}
               onChange={handleEpisodeSelect}
-              className="bg-transparent text-xs sm:text-sm font-bold text-purple-400 outline-none cursor-pointer"
+              className="bg-transparent text-xs sm:text-sm font-bold text-brand-purple outline-none cursor-pointer"
             >
               {Array.from({ length: Math.max(episodesInCurrentSeason, 1) }, (_, i) => i + 1).map((ep) => (
-                <option key={ep} value={ep} className="bg-card text-foreground">
+                <option key={ep} value={ep} className="bg-brand-card text-white">
                   Episódio {ep}
                 </option>
               ))}
@@ -113,7 +115,7 @@ export const SpoilerLockController: React.FC<SpoilerLockControllerProps> = ({
               variant="outline"
               size="sm"
               onClick={handleResetLock}
-              className="h-9 rounded-xl gap-1 text-xs"
+              className="h-10 rounded-xl gap-1.5 text-xs border-brand-border hover:bg-white/5 text-gray-300 hover:text-white cursor-pointer"
             >
               <RotateCcw className="h-3.5 w-3.5" /> Reativar Trava
             </Button>
@@ -122,9 +124,9 @@ export const SpoilerLockController: React.FC<SpoilerLockControllerProps> = ({
               variant="secondary"
               size="sm"
               onClick={handleUnlockAll}
-              className="h-9 rounded-xl gap-1 text-xs hover:bg-amber-500/20 hover:text-amber-300"
+              className="h-10 rounded-xl gap-1.5 text-xs bg-[#ff5500]/20 hover:bg-[#ff5500]/30 text-[#ff5500] border border-[#ff5500]/40 font-bold cursor-pointer"
             >
-              <CheckCircle2 className="h-3.5 w-3.5" /> Já vi tudo
+              <CheckCircle2 className="h-4 w-4" /> Já vi tudo
             </Button>
           )}
         </div>

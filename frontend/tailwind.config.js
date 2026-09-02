@@ -15,11 +15,20 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["'Plus Jakarta Sans'", "system-ui", "-apple-system", "sans-serif"],
-        display: ["'Plus Jakarta Sans'", "system-ui", "sans-serif"],
+        sans: ["'Inter'", "'Plus Jakarta Sans'", "system-ui", "-apple-system", "sans-serif"],
+        display: ["'Inter'", "'Plus Jakarta Sans'", "system-ui", "sans-serif"],
         mono: ["'JetBrains Mono'", "ui-monospace", "monospace"],
       },
       colors: {
+        brand: {
+          dark: '#050505',
+          card: '#111116',
+          border: '#1f1f2e',
+          purple: '#9d4edd',
+          pink: '#ff7eb3',
+          orange: '#ff5500',
+          orangeHover: '#ff7733',
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -53,6 +62,9 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { History, Flame, Star } from 'lucide-react';
 import { HeroSection } from '@/components/landing/HeroSection';
+import { FeaturedHeroBanner } from '@/components/landing/FeaturedHeroBanner';
+import { TrendingPeekCarousel } from '@/components/media/TrendingPeekCarousel';
 import { MediaCard } from '@/components/media/MediaCard';
-import { useRecentStore } from '@/stores/useRecentStore';
 import { MediaItem } from '@/types/media';
 import { mediaService } from '@/services/mediaService';
 
 export const HomePage: React.FC = () => {
-  const { recents } = useRecentStore();
   const [popularMedias, setPopularMedias] = useState<MediaItem[]>([]);
   const [loadingPopular, setLoadingPopular] = useState(true);
   const [mostRatedMedias, setMostRatedMedias] = useState<MediaItem[]>([]);
   const [loadingMostRated, setLoadingMostRated] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<string>('ALL');
 
   useEffect(() => {
     // Carregar destaques populares iniciais
@@ -19,7 +19,12 @@ export const HomePage: React.FC = () => {
       try {
         const data = await mediaService.search('Attack on Titan');
         const thrones = await mediaService.search('Game of Thrones');
-        const combined = [...(data.items || []), ...(thrones.items || [])].slice(0, 8);
+        const solo = await mediaService.search('Solo Leveling');
+        const combined = [
+          ...(data.items || []),
+          ...(thrones.items || []),
+          ...(solo.items || []),
+        ].slice(0, 10);
         setPopularMedias(combined);
       } catch (e) {
         console.warn('Erro ao carregar populares:', e);
@@ -33,7 +38,12 @@ export const HomePage: React.FC = () => {
       try {
         const breaking = await mediaService.search('Breaking Bad');
         const arcane = await mediaService.search('Arcane');
-        const combined = [...(breaking.items || []), ...(arcane.items || [])].slice(0, 8);
+        const frieren = await mediaService.search('Frieren');
+        const combined = [
+          ...(breaking.items || []),
+          ...(arcane.items || []),
+          ...(frieren.items || []),
+        ].slice(0, 10);
         setMostRatedMedias(combined);
       } catch (e) {
         console.warn('Erro ao carregar mais bem avaliados:', e);
@@ -66,85 +76,94 @@ export const HomePage: React.FC = () => {
     }
   }, []);
 
+  const filterMedias = (items: MediaItem[]) => {
+    if (activeFilter === 'ALL') return items;
+    return items.filter((item) => item.type === activeFilter);
+  };
+
+  const filteredPopular = filterMedias(popularMedias);
+  const filteredMostRated = filterMedias(mostRatedMedias);
+
   return (
-    <div className="space-y-16 pb-20">
-      {/* Hero Section Imersivo com Sneak Peek */}
-      <HeroSection trendingItems={popularMedias} isLoadingTrending={loadingPopular} />
+    <div className="space-y-12 pb-24">
+      {/* Hero Section Imersivo com Título, Pílulas de Filtro, Busca e Estatísticas */}
+      <HeroSection
+        activeFilter={activeFilter}
+        onFilterChange={(filter) => setActiveFilter(filter)}
+      />
 
-      {/* Seção: Obras Recentes / Continuar de Onde Parou */}
-      {recents.length > 0 && (
-        <section className="container max-w-7xl mx-auto px-4 sm:px-8">
-          <div className="flex items-center gap-2.5 mb-5 text-purple-400">
-            <History className="h-5 w-5" />
-            <h2 className="text-xl font-bold text-foreground">Continuar de Onde Parou</h2>
-          </div>
+      {/* Banner Destaque (Spotlight Hero Banner com Slider) */}
+      <FeaturedHeroBanner items={popularMedias} />
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-            {recents.map((item) => (
-              <MediaCard key={`recent-${item.type}-${item.externalId}`} media={item} />
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Seção: Obras em Alta (Carrossel Horizontal com Snap) */}
+      <section className="container max-w-7xl mx-auto px-4 sm:px-6">
+        <TrendingPeekCarousel items={popularMedias} isLoading={loadingPopular} />
+      </section>
 
-      {/* Seção: Obras em Destaque */}
-      <section className="container max-w-7xl mx-auto px-4 sm:px-8 scroll-mt-28" id="popular">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2.5 text-purple-400">
-            <Flame className="h-5 w-5 text-orange-400" />
-            <h2 className="text-xl font-bold text-foreground">Obras Populares para Recapitular</h2>
-          </div>
-          <span className="text-xs text-muted-foreground hidden sm:inline">
+
+
+      {/* Seção: Obras Populares para Recapitular */}
+      <section className="container max-w-7xl mx-auto px-4 sm:px-6 scroll-mt-28" id="popular">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+            Obras Populares para Recapitular
+          </h2>
+          <span className="text-xs text-gray-400 font-medium hidden sm:inline uppercase tracking-wider">
             Séries, Animes & Filmes
           </span>
         </div>
 
         {loadingPopular ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
             {Array.from({ length: 5 }).map((_, idx) => (
-              <div key={idx} className="aspect-[2/3] rounded-2xl bg-muted/40 animate-pulse" />
+              <div
+                key={idx}
+                className="aspect-[2/3] rounded-2xl bg-brand-card border border-brand-border animate-pulse"
+              />
             ))}
           </div>
-        ) : popularMedias.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-            {popularMedias.map((item) => (
+        ) : filteredPopular.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+            {filteredPopular.map((item) => (
               <MediaCard key={`popular-${item.type}-${item.externalId}`} media={item} />
             ))}
           </div>
         ) : (
-          <div className="p-8 rounded-2xl glass text-center text-sm text-muted-foreground">
-            Use a barra de pesquisa acima para encontrar qualquer anime, série ou filme!
+          <div className="p-8 rounded-2xl bg-brand-card border border-brand-border text-center text-sm text-gray-400">
+            Nenhuma obra encontrada para a categoria selecionada.
           </div>
         )}
       </section>
 
       {/* Seção: Mais Bem Avaliados */}
-      <section className="container max-w-7xl mx-auto px-4 sm:px-8 scroll-mt-28" id="most-rated">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2.5 text-yellow-400">
-            <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-            <h2 className="text-xl font-bold text-foreground">Mais Bem Avaliados</h2>
-          </div>
-          <span className="text-xs text-muted-foreground hidden sm:inline">
+      <section className="container max-w-7xl mx-auto px-4 sm:px-6 scroll-mt-28" id="most-rated">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+            Mais Bem Avaliados de Todos os Tempos
+          </h2>
+          <span className="text-xs text-gray-400 font-medium hidden sm:inline uppercase tracking-wider">
             Aclamados pela crítica e público
           </span>
         </div>
 
         {loadingMostRated ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
             {Array.from({ length: 5 }).map((_, idx) => (
-              <div key={idx} className="aspect-[2/3] rounded-2xl bg-muted/40 animate-pulse" />
+              <div
+                key={idx}
+                className="aspect-[2/3] rounded-2xl bg-brand-card border border-brand-border animate-pulse"
+              />
             ))}
           </div>
-        ) : mostRatedMedias.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-            {mostRatedMedias.map((item) => (
+        ) : filteredMostRated.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+            {filteredMostRated.map((item) => (
               <MediaCard key={`most-rated-${item.type}-${item.externalId}`} media={item} />
             ))}
           </div>
         ) : (
-          <div className="p-8 rounded-2xl glass text-center text-sm text-muted-foreground">
-            Nenhuma obra encontrada.
+          <div className="p-8 rounded-2xl bg-brand-card border border-brand-border text-center text-sm text-gray-400">
+            Nenhuma obra encontrada para esta categoria.
           </div>
         )}
       </section>
