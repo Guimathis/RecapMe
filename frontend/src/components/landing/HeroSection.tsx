@@ -48,7 +48,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
         )}
       >
-        Consulte resumos estruturados por temporada e episódio, e converse com a IA com uma trava inteligente que impede spoilers do futuro da trama.
+        Consulte resumos por temporada e episódio, e converse com a IA com uma trava inteligente que impede spoilers do futuro da trama.
       </p>
 
       {/* Barra de Busca */}
@@ -63,7 +63,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         {/* Filtros Pílulas */}
         <div
             className={cn(
-                "flex flex-wrap justify-center gap-2 md:gap-3 mt-10 transition-all duration-500 delay-200",
+                "flex flex-wrap justify-center gap-2 md:gap-3 mt-10 transition-all duration-500 delay-200 -z-10",
                 isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
             )}
         >

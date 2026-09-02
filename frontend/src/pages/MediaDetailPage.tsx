@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, Film, Loader2, Calendar, Layers, Star, Clock, Tv, ChevronDown, ChevronUp } from 'lucide-react';
 import { mediaService } from '@/services/mediaService';
 import { recapService } from '@/services/recapService';
@@ -7,6 +7,7 @@ import { MediaDetail, MediaType } from '@/types/media';
 import { SeasonRecap } from '@/types/recap';
 import { useRecentStore } from '@/stores/useRecentStore';
 import { useSpoilerStore } from '@/stores/useSpoilerStore';
+import { useChatStore } from '@/stores/useChatStore';
 import { SpoilerLockController } from '@/components/media/SpoilerLockController';
 import { SeasonRecapTab } from '@/components/recap/SeasonRecapTab';
 import { EpisodeAccordionList } from '@/components/recap/EpisodeAccordionList';
@@ -78,6 +79,9 @@ export const MediaDetailPage: React.FC = () => {
   const { addRecent } = useRecentStore();
   const { progressByMedia, setProgress } = useSpoilerStore();
 
+  const location = useLocation();
+  const { openChat } = useChatStore();
+
   const [media, setMedia] = useState<MediaDetail | null>(null);
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [recap, setRecap] = useState<SeasonRecap | null>(null);
@@ -102,6 +106,11 @@ export const MediaDetailPage: React.FC = () => {
         // Inicializar trava de spoiler se não existir
         if (!progressByMedia[mediaKey]) {
           setProgress(mediaKey, 1, 1);
+        }
+
+        // Abrir chat automaticamente se solicitado via navegação (state ou query param)
+        if (location.state?.openChat || new URLSearchParams(location.search).get('chat') === 'true') {
+          openChat(mediaKey, details.title);
         }
       } catch (err: any) {
         setError(err.message || 'Falha ao carregar detalhes da obra.');
@@ -217,7 +226,7 @@ export const MediaDetailPage: React.FC = () => {
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 relative">
         <div className="flex flex-col md:flex-row items-start gap-6 lg:gap-8 -mt-20 sm:-mt-28 md:-mt-36">
           {/* Pôster com Sobreposição */}
-          <div className="w-36 sm:w-48 md:w-56 lg:w-64 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border-2 border-brand-border/80 shrink-0 bg-brand-card z-10 group">
+          <div className="w-36 sm:w-48 md:w-56 lg:w-64 rounded-2xl overflow-hidden shadow-2xl border-2 border-brand-border/80 shrink-0 bg-brand-card z-10 group">
             {media.posterUrl ? (
               <img
                 src={media.posterUrl}
@@ -233,8 +242,6 @@ export const MediaDetailPage: React.FC = () => {
 
           {/* Informações Textuais e Metadados */}
           <div className="flex-1 min-w-0 w-full pt-1 md:pt-3 space-y-4">
-            {/* Badges de Tipo, Ano, Temporadas */}
-
 
             {/* Título Principal */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tight text-white drop-shadow-md uppercase">
@@ -252,6 +259,26 @@ export const MediaDetailPage: React.FC = () => {
                     <Calendar className="h-3 w-3" /> {media.releaseYear}
                   </Badge>
               )}
+                {statusInfo && (
+                    <Badge
+                        variant="outline"
+                        className={cn(
+                            "text-xs font-semibold px-2.5 py-0.5 border shadow-sm backdrop-blur-sm",
+                            statusInfo.isReleasing
+                                ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                                : "bg-blue-500/15 text-blue-400 border-blue-500/30"
+                        )}
+                    >
+                        <span
+                            className={cn(
+                                "w-1.5 h-1.5 rounded-full mr-1.5 inline-block",
+                                statusInfo.isReleasing ? "bg-emerald-400 animate-pulse" : "bg-blue-400"
+                            )}
+                        />
+                        {statusInfo.label}
+                    </Badge>
+                )}
+
               {media.totalSeasons && media.totalSeasons > 1 && (
                   <Badge variant="outline" className="gap-1 text-xs border-brand-border bg-brand-card/80 text-gray-300">
                     <Layers className="h-3 w-3" /> {media.totalSeasons} Temporadas
@@ -303,25 +330,6 @@ export const MediaDetailPage: React.FC = () => {
                       </div>
                     ) : null}
 
-                    {statusInfo && (
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "text-xs font-semibold px-2.5 py-0.5 border shadow-sm backdrop-blur-sm",
-                          statusInfo.isReleasing
-                            ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-                            : "bg-blue-500/15 text-blue-400 border-blue-500/30"
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "w-1.5 h-1.5 rounded-full mr-1.5 inline-block",
-                            statusInfo.isReleasing ? "bg-emerald-400 animate-pulse" : "bg-blue-400"
-                          )}
-                        />
-                        {statusInfo.label}
-                      </Badge>
-                    )}
                   </div>
 
                   {/* Grid de Metadados: Episódios, Duração, Estreia */}

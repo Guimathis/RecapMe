@@ -88,7 +88,7 @@ export const mediaService = {
     if (type) {
       params.append('type', type);
     }
-    const res = await apiFetch<any>(`/medias/search?${params.toString()}`);
+    const res = await apiFetch<any>(`/v1/medias/search?${params.toString()}`);
     if (!res) return { items: [], total: 0 };
     const rawList: any[] = Array.isArray(res)
       ? res
