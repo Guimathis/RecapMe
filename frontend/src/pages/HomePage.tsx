@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { FeaturedHeroBanner } from '@/components/landing/FeaturedHeroBanner';
 import { MediaCarouselSection } from '@/components/media/MediaCarouselSection';
@@ -26,19 +27,19 @@ export const HOME_SECTIONS_CONFIG: HomeSectionConfig[] = [
   {
     id: 'trending',
     title: 'Animes e Séries em alta no Brasil',
-    endpoint: '/api/v1/medias/trending',
+    endpoint: '/v1/medias/trending',
     fallback: MOCK_TRENDING_MEDIAS,
   },
   {
     id: 'popular',
     title: 'Obras Populares para Recapitular',
-    endpoint: '/api/v1/medias/popular',
+    endpoint: '/v1/medias/popular',
     fallback: MOCK_POPULAR_MEDIAS,
   },
   {
     id: 'most-rated',
     title: 'Mais Bem Avaliados',
-    endpoint: '/api/v1/medias/top-rated',
+    endpoint: '/v1/medias/top-rated',
     fallback: MOCK_TOP_RATED_MEDIAS,
   },
 ];
@@ -53,6 +54,7 @@ export const HomePage: React.FC = () => {
     )
   );
 
+  const location = useLocation();
   const [activeFilter, setActiveFilter] = useState<string>('ALL');
 
   useEffect(() => {
@@ -78,8 +80,8 @@ export const HomePage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (window.location.hash) {
-      const hash = window.location.hash;
+    const hash = location.hash || window.location.hash;
+    if (hash) {
       if (hash === '#search-section' || hash === '#search') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setTimeout(() => {
@@ -95,7 +97,7 @@ export const HomePage: React.FC = () => {
         }, 300);
       }
     }
-  }, []);
+  }, [location.hash]);
 
   const trendingItems = sectionsData['trending']?.items || [];
   const heroBannerItems =

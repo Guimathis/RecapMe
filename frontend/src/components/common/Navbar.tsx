@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const navLinks = [
+const homeNavLinks = [
   { name: "Busca", href: "#search-section" },
   { name: "Em Alta", href: "#trending" },
   { name: "Populares", href: "#popular" },
@@ -16,6 +16,12 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const isHomePage = location.pathname === '/';
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 40);
@@ -26,24 +32,27 @@ export const Navbar: React.FC = () => {
 
   const handleNavClick = (href: string) => {
     setIsMobileMenuOpen(false);
-    if (href.startsWith('#')) {
-      if (location.pathname !== '/') {
-        navigate(`/${href}`);
-        return;
-      }
 
-      if (href === '#search-section' || href === '#search') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        setTimeout(() => {
-          const input = document.querySelector('#search-section input') as HTMLInputElement;
-          if (input) {
-            input.focus();
-          }
-        }, 400);
-        return;
-      }
+    if (location.pathname !== '/') {
+      navigate(href.startsWith('/') ? href : `/${href}`);
+      return;
+    }
 
-      const el = document.querySelector(href);
+    const target = href.replace(/^\//, '');
+
+    if (target === '#search-section' || target === '#search') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => {
+        const input = document.querySelector('#search-section input') as HTMLInputElement;
+        if (input) {
+          input.focus();
+        }
+      }, 400);
+      return;
+    }
+
+    if (target.startsWith('#')) {
+      const el = document.querySelector(target);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth' });
       }
@@ -74,57 +83,70 @@ export const Navbar: React.FC = () => {
           </span>
         </Link>
 
-        {/* Links (Escondidos no mobile) */}
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
-          {navLinks.map((link) => (
+        {isHomePage ? (
+          <>
+            {/* Links da Home (Escondidos no mobile) */}
+            <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
+              {homeNavLinks.map((link) => (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavClick(link.href);
+                  }}
+                  className="hover:text-white transition-colors cursor-pointer relative group/link py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                >
+                  <span>{link.name}</span>
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-brand-purple transition-all duration-300 group-hover/link:w-full" />
+                </a>
+              ))}
+            </div>
+
+            {/* Mobile Menu Icon */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="text-gray-400 hover:text-white p-1 transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="Toggle menu"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
+              </button>
+            </div>
+          </>
+        ) : (
+          /* Na página de uma obra, exibe apenas a opção de Busca */
+          <div className="flex items-center gap-8 text-sm font-medium text-gray-400">
             <a
-              key={link.name}
-              href={link.href}
+              href="/#search-section"
               onClick={(e) => {
-                if (location.pathname === '/') {
-                  e.preventDefault();
-                  handleNavClick(link.href);
-                }
+                e.preventDefault();
+                handleNavClick('/#search-section');
               }}
               className="hover:text-white transition-colors cursor-pointer relative group/link py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
             >
-              <span>{link.name}</span>
+              <span>Busca</span>
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-brand-purple transition-all duration-300 group-hover/link:w-full" />
             </a>
-          ))}
-        </div>
-
-        {/* Mobile Menu Icon */}
-        <div className="md:hidden">
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="text-gray-400 hover:text-white p-1 transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label="Toggle menu"
-          >
-            {isMobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </button>
-        </div>
+          </div>
+        )}
       </nav>
 
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
+      {/* Mobile Menu Overlay (apenas na Home) */}
+      {isHomePage && isMobileMenuOpen && (
         <div className="pointer-events-auto md:hidden fixed inset-x-4 top-20 bg-brand-card/95 backdrop-blur-2xl border border-brand-border rounded-3xl p-6 shadow-2xl space-y-3 animate-in fade-in-0 zoom-in-95 duration-200">
           <div className="flex flex-col gap-2">
-            {navLinks.map((link) => (
+            {homeNavLinks.map((link) => (
               <a
                 key={link.name}
                 href={link.href}
                 onClick={(e) => {
-                  if (location.pathname === '/') {
-                    e.preventDefault();
-                    handleNavClick(link.href);
-                  } else {
-                    setIsMobileMenuOpen(false);
-                  }
+                  e.preventDefault();
+                  handleNavClick(link.href);
                 }}
                 className="flex items-center justify-between p-3 rounded-xl text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >

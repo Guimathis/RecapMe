@@ -13,6 +13,11 @@ export interface MediaItem {
   releaseYear?: number;
   totalSeasons?: number;
   totalEpisodes?: number;
+  score?: number;
+  status?: string;
+  seasonPeriod?: string;
+  durationMinutes?: number;
+  genres?: string[];
 }
 
 export interface MediaDetail extends MediaItem {

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Film, Loader2, Calendar, Layers } from 'lucide-react';
+import { ArrowLeft, Film, Loader2, Calendar, Layers, Star, Clock, Tv, ChevronDown, ChevronUp } from 'lucide-react';
 import { mediaService } from '@/services/mediaService';
 import { recapService } from '@/services/recapService';
 import { MediaDetail, MediaType } from '@/types/media';
@@ -14,6 +14,60 @@ import { ChatDrawer } from '@/components/chat/ChatDrawer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+const PERIOD_MAP: Record<string, string> = {
+  WINTER: 'Inverno',
+  SPRING: 'Primavera',
+  SUMMER: 'Verão',
+  FALL: 'Outono',
+};
+
+const GENRE_MAP: Record<string, string> = {
+  Action: 'Ação',
+  Adventure: 'Aventura',
+  Comedy: 'Comédia',
+  Drama: 'Drama',
+  Fantasy: 'Fantasia',
+  Horror: 'Terror',
+  Mystery: 'Mistério',
+  Psychological: 'Psicológico',
+  Romance: 'Romance',
+  'Sci-Fi': 'Ficção Científica',
+  'Science Fiction': 'Ficção Científica',
+  'Slice of Life': 'Slice of Life',
+  Sports: 'Esportes',
+  Supernatural: 'Sobrenatural',
+  Thriller: 'Suspense',
+  Animation: 'Animação',
+};
+
+function formatStatus(status?: string): { label: string; isReleasing: boolean } | null {
+  if (!status) return null;
+  const upper = status.toUpperCase();
+  switch (upper) {
+    case 'RELEASING':
+      return { label: 'Em Lançamento', isReleasing: true };
+    case 'FINISHED':
+      return { label: 'Finalizado', isReleasing: false };
+    case 'NOT_YET_RELEASED':
+      return { label: 'Em Breve', isReleasing: false };
+    case 'CANCELLED':
+      return { label: 'Cancelado', isReleasing: false };
+    case 'HIATUS':
+      return { label: 'Em Hiato', isReleasing: false };
+    default:
+      return { label: status, isReleasing: false };
+  }
+}
+
+function formatSeason(period?: string, year?: number): string | null {
+  if (!period && !year) return null;
+  const periodPt = period ? PERIOD_MAP[period.toUpperCase()] || period : null;
+  if (periodPt && year) return `${periodPt} de ${year}`;
+  if (periodPt) return periodPt;
+  return year ? String(year) : null;
+}
 
 export const MediaDetailPage: React.FC = () => {
   const { type, id } = useParams<{ type: string; id: string }>();
@@ -30,6 +84,9 @@ export const MediaDetailPage: React.FC = () => {
   const [loadingMedia, setLoadingMedia] = useState<boolean>(true);
   const [loadingRecap, setLoadingRecap] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [canExpand, setCanExpand] = useState(false);
+  const synopsisRef = useRef<HTMLParagraphElement>(null);
 
   // 1. Carregar Detalhes da Mídia
   useEffect(() => {
@@ -72,11 +129,29 @@ export const MediaDetailPage: React.FC = () => {
     fetchRecap();
   }, [mediaType, externalId, selectedSeason]);
 
+  // 3. Controle de expansão da sinopse
+  useEffect(() => {
+    setIsExpanded(false);
+    const checkOverflow = () => {
+      if (synopsisRef.current) {
+        const isOverflowing = synopsisRef.current.scrollHeight > synopsisRef.current.clientHeight + 1;
+        setCanExpand(isOverflowing || (media?.overview?.length || 0) > 300);
+      }
+    };
+    checkOverflow();
+    const timer = setTimeout(checkOverflow, 150);
+    window.addEventListener('resize', checkOverflow);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', checkOverflow);
+    };
+  }, [media?.overview]);
+
   if (loadingMedia) {
     return (
       <div className="container max-w-7xl mx-auto px-4 py-32 flex flex-col items-center justify-center space-y-4">
         <Loader2 className="h-10 w-10 animate-spin text-brand-purple" />
-        <p className="text-sm text-gray-400">Carregando detalhes e sincronizando metadados...</p>
+        <p className="text-sm text-gray-400">Carregando...</p>
       </div>
     );
   }
@@ -95,82 +170,217 @@ export const MediaDetailPage: React.FC = () => {
     );
   }
 
-  const episodesCount = recap?.episodes?.length || 12;
+  const episodesCount = recap?.episodes?.length || media.totalEpisodes || 12;
+  const statusInfo = formatStatus(media.status);
+  const seasonLabel = formatSeason(media.seasonPeriod, media.releaseYear);
+  const hasExtraInfo = Boolean(
+    (media.score != null && media.score > 0) ||
+    statusInfo ||
+    media.totalEpisodes ||
+    media.durationMinutes ||
+    seasonLabel ||
+    (media.genres && media.genres.length > 0)
+  );
 
   return (
     <div className="pb-28">
-      {/* Backdrop Header com Degradê Cinematográfico */}
-      <div className="relative w-full min-h-[420px] md:min-h-[500px] bg-brand-card overflow-hidden border-b border-brand-border/60">
+      {/* Banner Superior Panorâmico (Estilo AniList) */}
+      <div className="relative w-full h-[260px] sm:h-[320px] md:h-[380px] lg:h-[420px] bg-brand-card overflow-hidden">
         {media.backdropUrl ? (
           <img
             src={media.backdropUrl}
             alt={media.title}
-            className="w-full h-full object-cover object-center filter brightness-[0.4] blur-[1px] absolute inset-0"
+            className="w-full h-full object-cover object-center"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-b from-brand-purple/20 via-brand-dark to-brand-dark absolute inset-0" />
+          <div className="w-full h-full bg-gradient-to-r from-brand-purple/20 via-brand-dark to-brand-purple/10" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/80 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-dark via-brand-dark/60 to-transparent" />
 
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 relative pt-28 pb-12 flex flex-col justify-between min-h-[420px] md:min-h-[500px]">
-          {/* Botão de Voltar */}
-          <div>
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-300 hover:text-white transition-colors bg-brand-card/80 hover:bg-brand-card backdrop-blur-md px-4 py-2 rounded-full border border-brand-border shadow-lg"
-            >
-              <ArrowLeft className="h-4 w-4" /> Voltar à busca
-            </Link>
+        {/* Gradiente superior para contraste da barra de navegação */}
+        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
+
+        {/* Gradiente inferior suave para fusão com a página */}
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-brand-dark via-brand-dark/50 to-transparent pointer-events-none" />
+
+        {/* Botão de Voltar sobre o banner */}
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 relative h-full flex items-start pt-24 pointer-events-none">
+          <Link
+            to="/"
+            className="pointer-events-auto inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white transition-all bg-black/60 hover:bg-black/85 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-xl hover:scale-105"
+          >
+            <ArrowLeft className="h-4 w-4" /> Voltar à busca
+          </Link>
+        </div>
+      </div>
+
+      {/* Área de Detalhes da Obra com Pôster Sobreposto (Estilo AniList) */}
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 relative">
+        <div className="flex flex-col md:flex-row items-start gap-6 lg:gap-8 -mt-20 sm:-mt-28 md:-mt-36">
+          {/* Pôster com Sobreposição */}
+          <div className="w-36 sm:w-48 md:w-56 lg:w-64 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border-2 border-brand-border/80 shrink-0 bg-brand-card z-10 group">
+            {media.posterUrl ? (
+              <img
+                src={media.posterUrl}
+                alt={media.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-500">
+                <Film className="h-8 w-8" />
+              </div>
+            )}
           </div>
 
-          {/* Card Principal da Obra */}
-          <div className="flex flex-col md:flex-row items-start md:items-end gap-6 mt-6">
-            {/* Pôster */}
-            <div className="w-32 sm:w-44 md:w-56 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border-2 border-brand-border shrink-0 bg-brand-card group">
-              {media.posterUrl ? (
-                <img src={media.posterUrl} alt={media.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-500">
-                  <Film className="h-8 w-8" />
-                </div>
-              )}
-            </div>
+          {/* Informações Textuais e Metadados */}
+          <div className="flex-1 min-w-0 w-full pt-1 md:pt-3 space-y-4">
+            {/* Badges de Tipo, Ano, Temporadas */}
 
-            {/* Informações Textuais */}
-            <div className="space-y-3 max-w-3xl">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge
+
+            {/* Título Principal */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tight text-white drop-shadow-md uppercase">
+              {media.title}
+            </h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge
                   variant={media.type === 'ANIME' ? 'anime' : 'series'}
-                  className="text-xs px-2.5 py-0.5"
-                >
-                  {media.type}
-                </Badge>
-                {media.releaseYear && (
+                  className="text-xs px-2.5 py-0.5 uppercase"
+              >
+                {media.type}
+              </Badge>
+              {media.releaseYear && (
                   <Badge variant="outline" className="gap-1 text-xs border-brand-border bg-brand-card/80 text-gray-300">
                     <Calendar className="h-3 w-3" /> {media.releaseYear}
                   </Badge>
-                )}
-                {media.totalSeasons && media.totalSeasons > 1 && (
+              )}
+              {media.totalSeasons && media.totalSeasons > 1 && (
                   <Badge variant="outline" className="gap-1 text-xs border-brand-border bg-brand-card/80 text-gray-300">
                     <Layers className="h-3 w-3" /> {media.totalSeasons} Temporadas
                   </Badge>
+              )}
+            </div>
+
+            {/* Linha com Sinopse na esquerda e Metadados na direita */}
+            <div className="flex flex-col lg:flex-row gap-6 items-start justify-between w-full pt-1">
+              <div className="flex-1 min-w-0 space-y-2">
+                <p
+                  ref={synopsisRef}
+                  className={cn(
+                    "text-sm sm:text-base text-gray-300 leading-relaxed font-light",
+                    !isExpanded && "line-clamp-4 md:line-clamp-5"
+                  )}
+                >
+                  {media.overview || 'Consulte os resumos detalhados por temporada e episódio abaixo.'}
+                </p>
+
+                {canExpand && (
+                  <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-brand-purple hover:text-brand-pink transition-colors cursor-pointer py-0.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-purple rounded"
+                    aria-expanded={isExpanded}
+                  >
+                    <span>{isExpanded ? 'Ler menos' : 'Ler mais'}</span>
+                    {isExpanded ? (
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    ) : (
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    )}
+                  </button>
                 )}
               </div>
 
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-black italic tracking-tight text-white drop-shadow-md uppercase">
-                {media.title}
-              </h1>
+              {/* Bloco de Metadados Adicionais */}
+              {hasExtraInfo && (
+                <div className="w-full lg:w-72 xl:w-80 shrink-0 space-y-3">
+                  {/* Header: Nota / Avaliação & Status */}
+                  <div className="flex items-center justify-between gap-3">
+                    {media.score != null && media.score > 0 ? (
+                      <div className="flex items-center gap-1.5" title={`Nota: ${media.score.toFixed(1)} / 10`}>
+                        <Star className="h-4 w-4 text-amber-400 fill-amber-400 shrink-0" />
+                        <span className="text-white font-bold text-base leading-none">
+                          {media.score.toFixed(1)}
+                        </span>
+                        <span className="text-gray-400 text-xs font-light leading-none">/ 10</span>
+                      </div>
+                    ) : null}
 
-              {media.originalTitle && media.originalTitle !== media.title && (
-                <p className="text-base sm:text-lg text-brand-purple font-bold">
-                  {media.originalTitle}
-                </p>
+                    {statusInfo && (
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-xs font-semibold px-2.5 py-0.5 border shadow-sm backdrop-blur-sm",
+                          statusInfo.isReleasing
+                            ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                            : "bg-blue-500/15 text-blue-400 border-blue-500/30"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "w-1.5 h-1.5 rounded-full mr-1.5 inline-block",
+                            statusInfo.isReleasing ? "bg-emerald-400 animate-pulse" : "bg-blue-400"
+                          )}
+                        />
+                        {statusInfo.label}
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Grid de Metadados: Episódios, Duração, Estreia */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2.5 pt-1">
+                    {media.totalEpisodes ? (
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] uppercase tracking-wider text-gray-400 flex items-center gap-1 font-medium">
+                          <Tv className="h-3 w-3 text-brand-purple shrink-0" /> Episódios
+                        </span>
+                        <p className="text-sm font-semibold text-white">
+                          {media.totalEpisodes}
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {media.durationMinutes ? (
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] uppercase tracking-wider text-gray-400 flex items-center gap-1 font-medium">
+                          <Clock className="h-3 w-3 text-brand-purple shrink-0" /> Duração
+                        </span>
+                        <p className="text-sm font-semibold text-white">
+                          {media.durationMinutes} min
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {seasonLabel ? (
+                      <div className="space-y-0.5 col-span-2 sm:col-span-1 lg:col-span-1">
+                        <span className="text-[10px] uppercase tracking-wider text-gray-400 flex items-center gap-1 font-medium">
+                          <Calendar className="h-3 w-3 text-brand-purple shrink-0" /> Estreia
+                        </span>
+                        <p className="text-sm font-semibold text-white truncate" title={seasonLabel}>
+                          {seasonLabel}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {/* Lista de Gêneros */}
+                  {media.genres && media.genres.length > 0 && (
+                    <div className="pt-2 space-y-1.5">
+                      <span className="text-[10px] uppercase tracking-wider text-gray-400 font-medium block">
+                        Gêneros
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {media.genres.map((genre) => (
+                          <Badge
+                            key={genre}
+                            variant="outline"
+                            className="text-[11px] px-2.5 py-0.5 bg-black/40 backdrop-blur-sm border-brand-border/80 text-gray-300 font-normal hover:text-white hover:border-brand-purple/50 transition-colors"
+                          >
+                            {GENRE_MAP[genre] || genre}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
-
-              <p className="text-xs sm:text-sm text-gray-300 line-clamp-3 md:line-clamp-4 leading-relaxed max-w-2xl font-light">
-                {media.overview || 'Consulte os resumos detalhados por temporada e episódio abaixo.'}
-              </p>
             </div>
           </div>
         </div>

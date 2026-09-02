@@ -50,6 +50,15 @@ export function normalizeMediaItem(raw: any): MediaItem {
   const totalEpisodes = raw.totalEpisodes || undefined;
   const totalSeasons = raw.totalSeasons || 1;
   const source = raw.source || 'AniList';
+  const score = raw.score != null ? Number(raw.score) : undefined;
+  const status = raw.status ? String(raw.status) : undefined;
+  const seasonPeriod = raw.seasonPeriod ? String(raw.seasonPeriod) : undefined;
+  const durationMinutes = raw.durationMinutes != null ? Number(raw.durationMinutes) : undefined;
+  const genres = Array.isArray(raw.genres)
+    ? raw.genres.map(String)
+    : raw.genres instanceof Set
+    ? Array.from(raw.genres).map(String)
+    : undefined;
 
   return {
     id: raw.id ? String(raw.id) : undefined,
@@ -64,6 +73,11 @@ export function normalizeMediaItem(raw: any): MediaItem {
     releaseYear,
     totalSeasons,
     totalEpisodes,
+    score,
+    status,
+    seasonPeriod,
+    durationMinutes,
+    genres,
   };
 }
 
@@ -92,9 +106,9 @@ export const mediaService = {
   getDetails: async (type: MediaType, externalId: string): Promise<MediaDetail> => {
     let data: any;
     try {
-      data = await apiFetch<any>(`/medias/${externalId}`);
+      data = await apiFetch<any>(`/v1/medias/${externalId}`);
     } catch {
-      data = await apiFetch<any>(`/medias/${type}/${externalId}`);
+      data = await apiFetch<any>(`/v1/medias/${type}/${externalId}`);
     }
     const normalized = normalizeMediaItem(data);
     return {
