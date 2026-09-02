@@ -15,6 +15,7 @@
 | :--- | :--- | :--- | :--- |
 | V0.1 | 27/08/2026 | Arquitetura Legada | Especificação inicial baseada em proxy em tempo real para TMDb/Jikan (*Deprecada*). |
 | V1.0 | 28/08/2026 | Engenharia & Produto | **Refatoração Completa do Backend**: Transição para Catálogo Local Próprio em PostgreSQL com *Lazy Ingestion* (AniList + Kitsu GraphQL), busca Full-Text com `unaccent`, hierarquia relacional completa e desacoplamento do cliente. |
+| V1.1 | 01/09/2026 | Engenharia & Produto | **Seções da Home & Ingestão Reativa**: Adicionados endpoints agregados da Home (`/home`, `/trending`, `/popular`, `/top-rated`), query AniList GraphQL unificada com cache Caffeine, correção de resiliência no schema Kitsu GraphQL (`titles` escalares) e enriquecimento reativo sob demanda de episódios (`ensureEpisodesIngested`). |
 
 ---
 
@@ -246,20 +247,23 @@ O serviço de ingestão (`MediaIngestionService`) é o responsável por traduzir
   1. `getAnimesKitsu(title: $title, first: 5)`:
      - Executa busca pelo título e filtra nós com matching estrito de ano (`startDate`) e temporada (`season`).
   2. `getEpisodeKitsu(id: $id, first: 100)`:
-     - Extrai a lista de episódios contendo: `number`, `titles { canonical }`, `thumbnail { original { url } }`.
+     - Extrai a lista de episódios contendo: `number`, `titles { romanized original translated }`, `thumbnail { original { url } }`, `length`.
+     - *Resiliência de Schema:* Como o Kitsu define `titles.canonical` como `NON_NULL` mas o banco deles contém `null` para várias obras (ex.: *Mushoku Tensei*), são consultados os campos escalares seguros `romanized`, `original` e `translated`, com fallback para `"Episódio X"` quando ausentes.
 
-### 5.3 Algoritmo de Matching e Normalização
+### 5.3 Algoritmo de Matching, Normalização e Ingestão Sob Demanda
 1. O backend busca as informações da obra no **AniList**.
-2. Com o título e ano retornados pelo AniList, o backend consulta o **Kitsu**.
+2. Com o título e ano retornados pelo AniList, o backend consulta o **Kitsu** em `https://kitsu.io/api/graphql` com header `User-Agent: RecapMe/1.0` (evitando bloqueios Cloudflare 403).
 3. O algoritmo de cruzamento seleciona o anime correspondente no Kitsu conferindo:
    $$\text{Kitsu.startDate.split('-')[0]} == \text{AniList.seasonYear}$$
 4. O backend constrói o objeto `Media`, instancia a `Season` (Temporada 1 por padrão ou agrupamentos sazonais) e mapeia cada nó de episódio retornado pelo Kitsu para entidades `Episode`.
-5. A transação inteira é salva no PostgreSQL dentro de um bloco `@Transactional`.
+5. Se a obra for salva inicialmente como resumo (ex: carregada pelas seções da Home) ou o Kitsu estiver temporariamente indisponível, o método `ensureEpisodesIngested(Media)` é invocado de forma reativa sob demanda na primeira tentativa de leitura de detalhes (`/medias/{id}`, `/medias/{id}/seasons` ou `searchAndIngest`), garantindo que a árvore de episódios seja populada e enriquecida no PostgreSQL.
+6. A transação inteira é salva no PostgreSQL dentro de um bloco `@Transactional`.
 
 ### 5.4 Tratamento de Concorrência e Idempotência
 Para evitar condições de corrida (*race conditions*) quando múltiplos clientes buscam a mesma obra simultaneamente:
 - A coluna `anilist_id` possui índice único no banco de dados (`UNIQUE`).
 - A rotina de ingestão utiliza verificação antes de inserir (*Check-then-Act*) combinada com tratamento de `DataIntegrityViolationException` (retornando a entidade recém-criada pela thread concorrente).
+- O enriquecimento de episódios verifica `episodeRepository.countBySeasonMediaId(mediaId)` antes de acionar o Kitsu, garantindo execução estritamente idempotente.
 
 ### 5.5 Referência Concreta de Código & Diretrizes de Consulta do AnimeFlix
 
@@ -335,6 +339,73 @@ ORDER BY m.score DESC NULLS LAST;
 Todos os endpoints operam sob o prefixo `/api/v1`.
 
 ### 7.1 Módulo de Obras (`/api/v1/medias`)
+
+#### `GET /api/v1/medias/home`
+- **Descrição:** Retorna as seções agregadas da Home Page em uma única requisição (Banner Hero, Trending Now / Em Alta, Popular e Top Rated All Time), com cache Caffeine em memória (`home-sections`) e fallback resiliente para o banco local.
+- **Query Params:**
+  - `perPage` (int, default: 10)
+  - `seasonYear` (int, opcional - ano para filtro de banner, default: ano corrente)
+- **Status Sucesso:** `200 OK`
+- **Response DTO (`HomeSectionsResponseDto`):**
+```json
+{
+  "banner": {
+    "id": "7fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "anilistId": 16498,
+    "titleRomaji": "Shingeki no Kyojin",
+    "titleEnglish": "Attack on Titan",
+    "score": 8.65,
+    "coverImageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx16498.jpg",
+    "bannerImageUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/16498.jpg",
+    "seasonYear": 2013,
+    "totalEpisodes": 25,
+    "genres": ["Action", "Drama"]
+  },
+  "trending": [
+    {
+      "id": "8aa95f64-5717-4562-b3fc-2c963f66af11",
+      "anilistId": 113415,
+      "titleRomaji": "Jujutsu Kaisen",
+      "score": 8.52,
+      "seasonYear": 2020
+    }
+  ],
+  "popular": [ ... ],
+  "topRated": [ ... ]
+}
+```
+
+---
+
+#### `GET /api/v1/medias/trending`
+- **Descrição:** Retorna a listagem paginada de obras em alta no momento (`sort: TRENDING_DESC`), sincronizadas e cacheadas.
+- **Query Params:**
+  - `page` (int, default: 0)
+  - `size` (int, default: 20)
+- **Status Sucesso:** `200 OK`
+- **Response DTO (`ListAllMediasResponseDto`)**
+
+---
+
+#### `GET /api/v1/medias/popular`
+- **Descrição:** Retorna a listagem paginada de obras mais populares por contagem de membros (`sort: POPULARITY_DESC`).
+- **Query Params:**
+  - `page` (int, default: 0)
+  - `size` (int, default: 20)
+- **Status Sucesso:** `200 OK`
+- **Response DTO (`ListAllMediasResponseDto`)**
+
+---
+
+#### `GET /api/v1/medias/top-rated`
+- **Descrição:** Retorna a listagem paginada de obras com maior pontuação de todos os tempos (`sort: SCORE_DESC`).
+- **Query Params:**
+  - `page` (int, default: 0)
+  - `size` (int, default: 20)
+- **Status Sucesso:** `200 OK`
+- **Response DTO (`ListAllMediasResponseDto`)**
+
+---
 
 #### `GET /api/v1/medias`
 - **Descrição:** Lista e filtra obras diretamente da base local de dados com paginação e ordenação.

@@ -59,6 +59,124 @@ class ControllerIntegrationTests {
     private FeedbackService feedbackService;
 
     @Test
+    @DisplayName("GET /api/v1/medias/home deve retornar 200 OK com seções da home")
+    void shouldGetHomeSectionsSuccessfully() throws Exception {
+        UUID mediaId = UUID.randomUUID();
+        MediaSummaryDto mediaDto = MediaSummaryDto.builder()
+                .id(mediaId)
+                .anilistId(16498)
+                .titleRomaji("Shingeki no Kyojin")
+                .titleEnglish("Attack on Titan")
+                .score(BigDecimal.valueOf(8.65))
+                .build();
+
+        HomeSectionsResponseDto responseDto = HomeSectionsResponseDto.builder()
+                .banner(mediaDto)
+                .trending(List.of(mediaDto))
+                .popular(List.of(mediaDto))
+                .topRated(List.of(mediaDto))
+                .build();
+
+        when(mediaService.getHomeSections(10, null)).thenReturn(responseDto);
+
+        mockMvc.perform(get("/api/v1/medias/home")
+                        .param("perPage", "10")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.banner.titleRomaji").value("Shingeki no Kyojin"))
+                .andExpect(jsonPath("$.trending[0].titleRomaji").value("Shingeki no Kyojin"))
+                .andExpect(jsonPath("$.popular[0].titleRomaji").value("Shingeki no Kyojin"))
+                .andExpect(jsonPath("$.topRated[0].titleRomaji").value("Shingeki no Kyojin"));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/medias/trending deve retornar 200 OK com lista em alta")
+    void shouldGetTrendingSuccessfully() throws Exception {
+        UUID mediaId = UUID.randomUUID();
+        MediaSummaryDto mediaDto = MediaSummaryDto.builder()
+                .id(mediaId)
+                .anilistId(113415)
+                .titleRomaji("Jujutsu Kaisen")
+                .build();
+
+        ListAllMediasResponseDto responseDto = ListAllMediasResponseDto.builder()
+                .content(List.of(mediaDto))
+                .pageNumber(0)
+                .pageSize(10)
+                .totalElements(1)
+                .totalPages(1)
+                .isLast(true)
+                .build();
+
+        when(mediaService.getTrending(0, 10)).thenReturn(responseDto);
+
+        mockMvc.perform(get("/api/v1/medias/trending")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].titleRomaji").value("Jujutsu Kaisen"));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/medias/popular deve retornar 200 OK com lista popular")
+    void shouldGetPopularSuccessfully() throws Exception {
+        UUID mediaId = UUID.randomUUID();
+        MediaSummaryDto mediaDto = MediaSummaryDto.builder()
+                .id(mediaId)
+                .anilistId(16498)
+                .titleRomaji("Shingeki no Kyojin")
+                .build();
+
+        ListAllMediasResponseDto responseDto = ListAllMediasResponseDto.builder()
+                .content(List.of(mediaDto))
+                .pageNumber(0)
+                .pageSize(10)
+                .totalElements(1)
+                .totalPages(1)
+                .isLast(true)
+                .build();
+
+        when(mediaService.getPopular(0, 10)).thenReturn(responseDto);
+
+        mockMvc.perform(get("/api/v1/medias/popular")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].titleRomaji").value("Shingeki no Kyojin"));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/medias/top-rated deve retornar 200 OK com lista top rated")
+    void shouldGetTopRatedSuccessfully() throws Exception {
+        UUID mediaId = UUID.randomUUID();
+        MediaSummaryDto mediaDto = MediaSummaryDto.builder()
+                .id(mediaId)
+                .anilistId(5114)
+                .titleRomaji("Fullmetal Alchemist: Brotherhood")
+                .build();
+
+        ListAllMediasResponseDto responseDto = ListAllMediasResponseDto.builder()
+                .content(List.of(mediaDto))
+                .pageNumber(0)
+                .pageSize(10)
+                .totalElements(1)
+                .totalPages(1)
+                .isLast(true)
+                .build();
+
+        when(mediaService.getTopRated(0, 10)).thenReturn(responseDto);
+
+        mockMvc.perform(get("/api/v1/medias/top-rated")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].titleRomaji").value("Fullmetal Alchemist: Brotherhood"));
+    }
+
+    @Test
     @DisplayName("GET /api/v1/medias deve retornar 200 OK com lista paginada de mídias")
     void shouldListMediasSuccessfully() throws Exception {
         UUID mediaId = UUID.randomUUID();

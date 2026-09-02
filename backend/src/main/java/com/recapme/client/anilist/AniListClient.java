@@ -104,6 +104,199 @@ public class AniListClient {
         }
     """;
 
+    private static final String GET_HOME_SECTIONS_QUERY = """
+        query getHomeSections($perPage: Int, $seasonYear: Int) {
+          banner: Media(type: ANIME, sort: POPULARITY_DESC, seasonYear: $seasonYear) {
+            id
+            title {
+              romaji
+              english
+            }
+            coverImage {
+              color
+              medium
+              large
+              extraLarge
+            }
+            bannerImage
+            format
+            duration
+            meanScore
+            status
+            genres
+            seasonYear
+            season
+            description
+            episodes
+          }
+          trending: Page(perPage: $perPage, page: 1) {
+            media(sort: TRENDING_DESC, type: ANIME) {
+              id
+              title {
+                romaji
+                english
+              }
+              coverImage {
+                color
+                medium
+                large
+                extraLarge
+              }
+              bannerImage
+              format
+              duration
+              meanScore
+              status
+              genres
+              seasonYear
+              season
+              description
+              episodes
+            }
+          }
+          popular: Page(perPage: $perPage, page: 1) {
+            media(sort: POPULARITY_DESC, type: ANIME) {
+              id
+              title {
+                romaji
+                english
+              }
+              coverImage {
+                color
+                medium
+                large
+                extraLarge
+              }
+              bannerImage
+              format
+              duration
+              meanScore
+              status
+              genres
+              seasonYear
+              season
+              description
+              episodes
+            }
+          }
+          topRated: Page(perPage: $perPage, page: 1) {
+            media(sort: SCORE_DESC, type: ANIME) {
+              id
+              title {
+                romaji
+                english
+              }
+              coverImage {
+                color
+                medium
+                large
+                extraLarge
+              }
+              bannerImage
+              format
+              duration
+              meanScore
+              status
+              genres
+              seasonYear
+              season
+              description
+              episodes
+            }
+          }
+        }
+    """;
+
+    private static final String GET_TRENDING_PAGED_QUERY = """
+        query getTrendingPaged($page: Int, $perPage: Int) {
+          Page(perPage: $perPage, page: $page) {
+            media(sort: TRENDING_DESC, type: ANIME) {
+              id
+              title {
+                romaji
+                english
+              }
+              coverImage {
+                color
+                medium
+                large
+                extraLarge
+              }
+              bannerImage
+              format
+              duration
+              meanScore
+              status
+              genres
+              seasonYear
+              season
+              description
+              episodes
+            }
+          }
+        }
+    """;
+
+    private static final String GET_POPULAR_PAGED_QUERY = """
+        query getPopularPaged($page: Int, $perPage: Int) {
+          Page(perPage: $perPage, page: $page) {
+            media(sort: POPULARITY_DESC, type: ANIME) {
+              id
+              title {
+                romaji
+                english
+              }
+              coverImage {
+                color
+                medium
+                large
+                extraLarge
+              }
+              bannerImage
+              format
+              duration
+              meanScore
+              status
+              genres
+              seasonYear
+              season
+              description
+              episodes
+            }
+          }
+        }
+    """;
+
+    private static final String GET_TOP_RATED_PAGED_QUERY = """
+        query getTopRatedPaged($page: Int, $perPage: Int) {
+          Page(perPage: $perPage, page: $page) {
+            media(sort: SCORE_DESC, type: ANIME) {
+              id
+              title {
+                romaji
+                english
+              }
+              coverImage {
+                color
+                medium
+                large
+                extraLarge
+              }
+              bannerImage
+              format
+              duration
+              meanScore
+              status
+              genres
+              seasonYear
+              season
+              description
+              episodes
+            }
+          }
+        }
+    """;
+
     public AniListClient(@Qualifier("anilistRestClient") RestClient anilistRestClient) {
         this.anilistRestClient = anilistRestClient;
     }
@@ -188,6 +381,74 @@ public class AniListClient {
         } catch (Exception e) {
             log.error("Failed to fetch popular banners from AniList: {}", e.getMessage());
             throw new ExternalIntegrationException("AniList", "Failed to fetch popular banners", e);
+        }
+    }
+
+    public AniListDto.DataContainer getHomeSections(int perPage, Integer seasonYear) {
+        try {
+            Map<String, Object> variables = new java.util.HashMap<>();
+            variables.put("perPage", Math.max(1, perPage));
+            if (seasonYear != null) {
+                variables.put("seasonYear", seasonYear);
+            }
+
+            AniListDto.GraphQLRequest request = new AniListDto.GraphQLRequest(
+                    GET_HOME_SECTIONS_QUERY,
+                    variables
+            );
+
+            AniListDto.GraphQLResponse response = anilistRestClient.post()
+                    .body(request)
+                    .retrieve()
+                    .body(AniListDto.GraphQLResponse.class);
+
+            if (response == null || response.getData() == null) {
+                return new AniListDto.DataContainer();
+            }
+
+            return response.getData();
+        } catch (Exception e) {
+            log.error("Failed to fetch home sections from AniList: {}", e.getMessage());
+            throw new ExternalIntegrationException("AniList", "Failed to fetch home sections", e);
+        }
+    }
+
+    public List<AniListDto.MediaContainer> getTrending(int page, int perPage) {
+        return fetchPagedMedia(GET_TRENDING_PAGED_QUERY, page, perPage, "trending");
+    }
+
+    public List<AniListDto.MediaContainer> getPopular(int page, int perPage) {
+        return fetchPagedMedia(GET_POPULAR_PAGED_QUERY, page, perPage, "popular");
+    }
+
+    public List<AniListDto.MediaContainer> getTopRated(int page, int perPage) {
+        return fetchPagedMedia(GET_TOP_RATED_PAGED_QUERY, page, perPage, "top rated");
+    }
+
+    private List<AniListDto.MediaContainer> fetchPagedMedia(String query, int page, int perPage, String sectionName) {
+        try {
+            AniListDto.GraphQLRequest request = new AniListDto.GraphQLRequest(
+                    query,
+                    Map.of(
+                            "page", Math.max(1, page),
+                            "perPage", Math.max(1, perPage)
+                    )
+            );
+
+            AniListDto.GraphQLResponse response = anilistRestClient.post()
+                    .body(request)
+                    .retrieve()
+                    .body(AniListDto.GraphQLResponse.class);
+
+            if (response == null || response.getData() == null || response.getData().getPage() == null) {
+                return Collections.emptyList();
+            }
+
+            List<AniListDto.MediaContainer> list = response.getData().getPage().getMedia();
+            return list != null ? list : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Failed to fetch {} media from AniList: {}", sectionName, e.getMessage());
+            throw new ExternalIntegrationException("AniList", "Failed to fetch " + sectionName + " media", e);
         }
     }
 }

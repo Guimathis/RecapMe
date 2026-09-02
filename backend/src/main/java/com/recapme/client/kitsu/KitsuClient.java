@@ -26,7 +26,9 @@ public class KitsuClient {
                 nodes {
                   number
                   titles {
-                    canonical
+                    romanized
+                    original
+                    translated
                   }
                   thumbnail {
                     original {
@@ -50,7 +52,9 @@ public class KitsuClient {
               nodes {
                 number
                 titles {
-                  canonical
+                  romanized
+                  original
+                  translated
                 }
                 thumbnail {
                   original {

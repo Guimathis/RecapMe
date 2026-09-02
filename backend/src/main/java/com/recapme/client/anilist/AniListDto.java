@@ -42,6 +42,10 @@ public class AniListDto {
     @AllArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class DataContainer {
+        private MediaContainer banner;
+        private PageContainer trending;
+        private PageContainer popular;
+        private PageContainer topRated;
         private MediaContainer Media;
         private PageContainer Page;
     }

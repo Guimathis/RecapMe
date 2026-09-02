@@ -1,5 +1,6 @@
 package com.recapme.controller;
 
+import com.recapme.dto.response.HomeSectionsResponseDto;
 import com.recapme.dto.response.ListAllMediasResponseDto;
 import com.recapme.dto.response.ListAllSeasonsResponseDto;
 import com.recapme.dto.response.OneMediaResponseDto;
@@ -26,6 +27,110 @@ import java.util.UUID;
 public class MediaController {
 
     private final MediaService mediaService;
+
+    @Operation(
+            summary = "Obter seções de destaque para a Home",
+            description = "Recupera as 4 seções principais de exibição da Home (Banner Hero, Trending Now, Popular e Top Rated de todos os tempos), sincronizando metadados com o banco de dados local com suporte a cache Caffeine."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Seções da Home recuperadas com sucesso",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = HomeSectionsResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno no servidor",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProblemDetail.class))
+            )
+    })
+    @GetMapping("/home")
+    public ResponseEntity<HomeSectionsResponseDto> getHomeSections(
+            @Parameter(description = "Quantidade de itens por seção", example = "10")
+            @RequestParam(value = "perPage", defaultValue = "10") int perPage,
+            @Parameter(description = "Ano da temporada para filtrar o banner (opcional)", example = "2024")
+            @RequestParam(value = "seasonYear", required = false) Integer seasonYear) {
+        HomeSectionsResponseDto response = mediaService.getHomeSections(perPage, seasonYear);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(
+            summary = "Listar obras em alta (Trending Now)",
+            description = "Recupera a lista paginada de obras em alta no momento com base no engajamento recente da comunidade."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Lista de obras em alta recuperada com sucesso",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ListAllMediasResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno no servidor",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProblemDetail.class))
+            )
+    })
+    @GetMapping("/trending")
+    public ResponseEntity<ListAllMediasResponseDto> getTrending(
+            @Parameter(description = "Número da página (0-based)", example = "0")
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @Parameter(description = "Quantidade de elementos por página", example = "10")
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+        ListAllMediasResponseDto response = mediaService.getTrending(page, size);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(
+            summary = "Listar obras mais populares (Popular)",
+            description = "Recupera a lista paginada de obras com maior número de membros e popularidade geral."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Lista de obras populares recuperada com sucesso",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ListAllMediasResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno no servidor",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProblemDetail.class))
+            )
+    })
+    @GetMapping("/popular")
+    public ResponseEntity<ListAllMediasResponseDto> getPopular(
+            @Parameter(description = "Número da página (0-based)", example = "0")
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @Parameter(description = "Quantidade de elementos por página", example = "10")
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+        ListAllMediasResponseDto response = mediaService.getPopular(page, size);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Operation(
+            summary = "Listar obras mais bem avaliadas (Top Rated All Time)",
+            description = "Recupera a lista paginada de obras com as maiores notas médias de avaliação de todos os tempos."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Lista de obras mais bem avaliadas recuperada com sucesso",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ListAllMediasResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno no servidor",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProblemDetail.class))
+            )
+    })
+    @GetMapping("/top-rated")
+    public ResponseEntity<ListAllMediasResponseDto> getTopRated(
+            @Parameter(description = "Número da página (0-based)", example = "0")
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @Parameter(description = "Quantidade de elementos por página", example = "10")
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+        ListAllMediasResponseDto response = mediaService.getTopRated(page, size);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
 
     @Operation(
             summary = "Listar e filtrar obras do catálogo",

@@ -1,6 +1,9 @@
 package com.recapme.service;
 
+import com.recapme.client.anilist.AniListClient;
+import com.recapme.client.anilist.AniListDto;
 import com.recapme.common.exception.ResourceNotFoundException;
+import com.recapme.dto.response.HomeSectionsResponseDto;
 import com.recapme.dto.response.ListAllMediasResponseDto;
 import com.recapme.dto.response.ListAllSeasonsResponseDto;
 import com.recapme.dto.response.OneMediaResponseDto;
@@ -45,6 +48,9 @@ class MediaServiceTest {
 
     @Mock
     private MediaIngestionService mediaIngestionService;
+
+    @Mock
+    private AniListClient aniListClient;
 
     @InjectMocks
     private MediaService mediaService;
@@ -128,6 +134,7 @@ class MediaServiceTest {
                 .build();
 
         when(mediaRepository.findById(id)).thenReturn(Optional.of(sampleMedia));
+        when(mediaIngestionService.ensureEpisodesIngested(sampleMedia)).thenReturn(sampleMedia);
         when(seasonRepository.findByMediaIdOrderBySeasonNumberAsc(id)).thenReturn(List.of(season));
 
         OneMediaResponseDto result = mediaService.getById(id);
@@ -161,7 +168,8 @@ class MediaServiceTest {
                 .episodeCount(25)
                 .build();
 
-        when(mediaRepository.existsById(id)).thenReturn(true);
+        when(mediaRepository.findById(id)).thenReturn(Optional.of(sampleMedia));
+        when(mediaIngestionService.ensureEpisodesIngested(sampleMedia)).thenReturn(sampleMedia);
         when(seasonRepository.findByMediaIdOrderBySeasonNumberAsc(id)).thenReturn(List.of(season));
 
         ListAllSeasonsResponseDto result = mediaService.getSeasonsByMediaId(id);
@@ -169,5 +177,96 @@ class MediaServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.mediaId()).isEqualTo(id);
         assertThat(result.seasons()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("getHomeSections deve agregar banner, trending, popular e topRated")
+    void shouldGetHomeSectionsSuccessfully() {
+        AniListDto.MediaContainer bannerMedia = AniListDto.MediaContainer.builder()
+                .id(16498)
+                .title(new AniListDto.Title("Shingeki no Kyojin", "Attack on Titan"))
+                .build();
+        AniListDto.MediaContainer trendingMedia = AniListDto.MediaContainer.builder()
+                .id(113415)
+                .title(new AniListDto.Title("Jujutsu Kaisen", "Jujutsu Kaisen"))
+                .build();
+
+        AniListDto.DataContainer dataContainer = new AniListDto.DataContainer();
+        dataContainer.setBanner(bannerMedia);
+        dataContainer.setTrending(new AniListDto.PageContainer(List.of(trendingMedia)));
+        dataContainer.setPopular(new AniListDto.PageContainer(List.of(bannerMedia)));
+        dataContainer.setTopRated(new AniListDto.PageContainer(List.of(bannerMedia)));
+
+        when(aniListClient.getHomeSections(10, 2024)).thenReturn(dataContainer);
+        when(mediaIngestionService.persistOrUpdateSummary(bannerMedia)).thenReturn(sampleMedia);
+        when(mediaIngestionService.syncMediaSummaries(any())).thenReturn(List.of(sampleMedia));
+
+        HomeSectionsResponseDto result = mediaService.getHomeSections(10, 2024);
+
+        assertThat(result).isNotNull();
+        assertThat(result.banner()).isNotNull();
+        assertThat(result.banner().titleRomaji()).isEqualTo("Shingeki no Kyojin");
+        assertThat(result.trending()).hasSize(1);
+        assertThat(result.popular()).hasSize(1);
+        assertThat(result.topRated()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("getHomeSections com falha na integração deve fazer fallback para base local")
+    void shouldFallbackToLocalMediasWhenAniListFailsOnHomeSections() {
+        when(aniListClient.getHomeSections(10, 2024)).thenThrow(new RuntimeException("AniList down"));
+        Page<Media> localPage = new PageImpl<>(List.of(sampleMedia));
+        when(mediaRepository.findAll(any(PageRequest.class))).thenReturn(localPage);
+
+        HomeSectionsResponseDto result = mediaService.getHomeSections(10, 2024);
+
+        assertThat(result).isNotNull();
+        assertThat(result.banner()).isNotNull();
+        assertThat(result.banner().titleRomaji()).isEqualTo("Shingeki no Kyojin");
+        assertThat(result.trending()).hasSize(1);
+        assertThat(result.popular()).hasSize(1);
+        assertThat(result.topRated()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("getTrending deve retornar mídias em alta")
+    void shouldGetTrendingMedias() {
+        AniListDto.MediaContainer mediaContainer = AniListDto.MediaContainer.builder().id(113415).build();
+        when(aniListClient.getTrending(1, 10)).thenReturn(List.of(mediaContainer));
+        when(mediaIngestionService.syncMediaSummaries(List.of(mediaContainer))).thenReturn(List.of(sampleMedia));
+
+        ListAllMediasResponseDto result = mediaService.getTrending(0, 10);
+
+        assertThat(result).isNotNull();
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.content().get(0).titleRomaji()).isEqualTo("Shingeki no Kyojin");
+    }
+
+    @Test
+    @DisplayName("getPopular deve retornar mídias populares")
+    void shouldGetPopularMedias() {
+        AniListDto.MediaContainer mediaContainer = AniListDto.MediaContainer.builder().id(16498).build();
+        when(aniListClient.getPopular(1, 10)).thenReturn(List.of(mediaContainer));
+        when(mediaIngestionService.syncMediaSummaries(List.of(mediaContainer))).thenReturn(List.of(sampleMedia));
+
+        ListAllMediasResponseDto result = mediaService.getPopular(0, 10);
+
+        assertThat(result).isNotNull();
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.content().get(0).titleRomaji()).isEqualTo("Shingeki no Kyojin");
+    }
+
+    @Test
+    @DisplayName("getTopRated deve retornar mídias mais bem avaliadas")
+    void shouldGetTopRatedMedias() {
+        AniListDto.MediaContainer mediaContainer = AniListDto.MediaContainer.builder().id(5114).build();
+        when(aniListClient.getTopRated(1, 10)).thenReturn(List.of(mediaContainer));
+        when(mediaIngestionService.syncMediaSummaries(List.of(mediaContainer))).thenReturn(List.of(sampleMedia));
+
+        ListAllMediasResponseDto result = mediaService.getTopRated(0, 10);
+
+        assertThat(result).isNotNull();
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.content().get(0).titleRomaji()).isEqualTo("Shingeki no Kyojin");
     }
 }
