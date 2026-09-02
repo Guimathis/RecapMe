@@ -14,7 +14,6 @@ import { ChatDrawer } from '@/components/chat/ChatDrawer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 export const MediaDetailPage: React.FC = () => {
   const { type, id } = useParams<{ type: string; id: string }>();
@@ -142,13 +141,8 @@ export const MediaDetailPage: React.FC = () => {
             <div className="space-y-3 max-w-3xl">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge
-                  variant={media.type === 'ANIME' ? 'warning' : 'default'}
-                  className={cn(
-                    "uppercase font-bold text-xs px-2.5 py-0.5",
-                    media.type === 'ANIME'
-                      ? "bg-brand-purple/25 text-brand-purple border-brand-purple/40"
-                      : "bg-[#ff5500]/25 text-[#ff5500] border-[#ff5500]/40"
-                  )}
+                  variant={media.type === 'ANIME' ? 'anime' : 'series'}
+                  className="text-xs px-2.5 py-0.5"
                 >
                   {media.type}
                 </Badge>

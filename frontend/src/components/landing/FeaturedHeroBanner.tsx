@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, Bookmark, ChevronLeft, ChevronRight } from 'lucide-react';
 import { MediaItem } from '@/types/media';
+import { Button } from '@/components/ui/button';
 
 interface FeaturedHeroBannerProps {
   items?: MediaItem[];
@@ -147,16 +148,19 @@ export const FeaturedHeroBanner: React.FC<FeaturedHeroBannerProps> = ({ items })
 
           {/* Botões */}
           <div className="flex items-center gap-4">
-            <button
+            <Button
+              variant="orange"
+              size="lg"
               onClick={() => navigate(`/media/${current.type}/${current.id}`)}
-              className="bg-[#ff5500] hover:bg-[#ff7733] text-white font-bold py-3.5 px-7 rounded-xl flex items-center gap-2.5 transition-all shadow-lg shadow-[#ff5500]/30 hover:scale-105 active:scale-95 cursor-pointer"
+              className="h-auto py-3.5 px-7 rounded-xl flex items-center gap-2.5 transition-all shadow-lg hover:scale-105"
             >
               <Play className="h-5 w-5 fill-white" /> COMEÇAR A RECAPITULAR E1
-            </button>
+            </Button>
             <button
               onClick={(e) => toggleBookmark(current.id, e)}
-              className="border border-gray-500 hover:border-white text-white p-3.5 rounded-xl transition-colors bg-black/40 backdrop-blur cursor-pointer"
+              className="border border-gray-500 hover:border-white text-white p-3.5 rounded-xl transition-colors bg-black/40 backdrop-blur cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title="Salvar na lista"
+              aria-label="Salvar na lista"
             >
               <Bookmark
                 className={`h-5 w-5 ${
@@ -173,8 +177,8 @@ export const FeaturedHeroBanner: React.FC<FeaturedHeroBannerProps> = ({ items })
                 key={`dot-${item.id}-${idx}`}
                 onClick={() => setCurrentIndex(idx)}
                 aria-label={`Slide ${idx + 1}`}
-                className={`h-1.5 transition-all duration-300 rounded-full cursor-pointer ${
-                  idx === currentIndex ? 'w-8 bg-[#ff5500]' : 'w-4 bg-gray-600 hover:bg-gray-400'
+                className={`h-1.5 transition-all duration-300 rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  idx === currentIndex ? 'w-8 bg-brand-orange' : 'w-4 bg-gray-600 hover:bg-gray-400'
                 }`}
               />
             ))}
@@ -186,7 +190,7 @@ export const FeaturedHeroBanner: React.FC<FeaturedHeroBannerProps> = ({ items })
           <button
             onClick={handleNext}
             aria-label="Próximo"
-            className="bg-black/50 hover:bg-black p-3 rounded-full backdrop-blur border border-white/10 text-white transition-all hover:scale-110 cursor-pointer"
+            className="bg-black/50 hover:bg-black p-3 rounded-full backdrop-blur border border-white/10 text-white transition-all hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ChevronRight className="h-6 w-6" />
           </button>
@@ -195,7 +199,7 @@ export const FeaturedHeroBanner: React.FC<FeaturedHeroBannerProps> = ({ items })
           <button
             onClick={handlePrev}
             aria-label="Anterior"
-            className="bg-black/50 hover:bg-black p-3 rounded-full backdrop-blur border border-white/10 text-white transition-all hover:scale-110 cursor-pointer"
+            className="bg-black/50 hover:bg-black p-3 rounded-full backdrop-blur border border-white/10 text-white transition-all hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ChevronLeft className="h-6 w-6" />
           </button>

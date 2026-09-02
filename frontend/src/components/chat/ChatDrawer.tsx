@@ -144,8 +144,17 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
       {/* Avatar IA Flutuante (Inspirado no canto inferior direito do prototype) */}
       {!isOpen && (
         <div
+          role="button"
+          tabIndex={0}
+          aria-label="Abrir assistente IA sem spoilers"
           onClick={() => openChat(mediaKey, mediaTitle)}
-          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-40 flex flex-col items-end cursor-pointer group select-none animate-in fade-in zoom-in-95 duration-300"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              openChat(mediaKey, mediaTitle);
+            }
+          }}
+          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-40 flex flex-col items-end cursor-pointer group select-none animate-in fade-in zoom-in-95 duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full"
         >
           {/* Tooltip speech bubble */}
           <div className="bg-white text-black text-xs font-bold px-3 py-1.5 rounded-t-lg rounded-bl-lg mb-2 shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 flex items-center gap-1.5">
@@ -168,10 +177,13 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
       {isOpen && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="w-full sm:w-[480px] h-full bg-[#0d0d14] border-l border-brand-border shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-right duration-300"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Chat sobre ${mediaTitle}`}
+            className="w-full sm:w-[480px] h-full bg-brand-inset border-l border-brand-border shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-right duration-300"
           >
             {/* Header do Chat */}
-            <div className="p-4 border-b border-brand-border flex items-center justify-between bg-[#111116]">
+            <div className="p-4 border-b border-brand-border flex items-center justify-between bg-brand-card">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-brand-purple/20 border border-brand-purple/30 flex items-center justify-center text-brand-purple">
                   <Bot className="h-5 w-5" />
@@ -243,7 +255,7 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
                         key={idx}
                         type="button"
                         onClick={() => handleSend(q)}
-                        className="w-full text-left p-3 rounded-xl bg-brand-card hover:bg-[#1a1a24] border border-brand-border hover:border-brand-purple text-xs text-gray-300 hover:text-white transition-all cursor-pointer"
+                        className="w-full text-left p-3 rounded-xl bg-brand-card hover:bg-white/5 border border-brand-border hover:border-brand-purple text-xs text-gray-300 hover:text-white transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         ✨ {q}
                       </button>
@@ -332,7 +344,7 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
             </div>
 
             {/* Input de Mensagem */}
-            <div className="p-3.5 border-t border-brand-border bg-[#111116]">
+            <div className="p-3.5 border-t border-brand-border bg-brand-card">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -346,7 +358,7 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={`Pergunte algo até T${progress.season} E${progress.episode}...`}
                   disabled={isStreaming}
-                  className="flex-1 bg-[#0d0d14] border border-brand-border rounded-full px-4 py-3 text-xs sm:text-sm text-white placeholder:text-gray-500 outline-none focus:border-brand-purple"
+                  className="flex-1 bg-brand-inset border border-brand-border rounded-full px-4 py-3 text-xs sm:text-sm text-white placeholder:text-gray-500 outline-none focus:border-brand-purple"
                 />
                 <Button
                   type="submit"

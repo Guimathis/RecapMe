@@ -63,12 +63,12 @@ export const Navbar: React.FC = () => {
         className={cn(
           "pointer-events-auto flex justify-between items-center",
           isScrolled
-            ? "w-[92%] max-w-4xl bg-[#111116]/85 backdrop-blur-lg rounded-full px-6 md:px-8 py-3 shadow-2xl border border-[#2a2a35] transition-all duration-300"
+            ? "w-[92%] max-w-4xl bg-brand-card/85 backdrop-blur-lg rounded-full px-6 md:px-8 py-3 shadow-2xl border border-brand-border transition-all duration-300"
             : "w-full max-w-7xl bg-transparent px-6 py-4 md:py-6 border border-transparent transition-[width,max-width,padding,background-color,border-radius,box-shadow,backdrop-filter] duration-300"
         )}
       >
         {/* Logo */}
-        <Link to="/" className="flex items-center group cursor-pointer">
+        <Link to="/" className="flex items-center group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
           <span className="text-xl md:text-2xl font-black tracking-tight text-white hover:text-white transition-colors">
             recap<span className="text-brand-purple">.me</span>
           </span>
@@ -86,7 +86,7 @@ export const Navbar: React.FC = () => {
                   handleNavClick(link.href);
                 }
               }}
-              className="hover:text-white transition-colors cursor-pointer relative group/link py-1"
+              className="hover:text-white transition-colors cursor-pointer relative group/link py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
             >
               <span>{link.name}</span>
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-brand-purple transition-all duration-300 group-hover/link:w-full" />
@@ -98,7 +98,7 @@ export const Navbar: React.FC = () => {
         <div className="md:hidden">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="text-gray-400 hover:text-white p-1 transition-colors"
+            className="text-gray-400 hover:text-white p-1 transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? (
@@ -112,7 +112,7 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="pointer-events-auto md:hidden fixed inset-x-4 top-20 bg-[#111116]/95 backdrop-blur-2xl border border-[#2a2a35] rounded-3xl p-6 shadow-2xl space-y-3 animate-in fade-in-0 zoom-in-95 duration-200">
+        <div className="pointer-events-auto md:hidden fixed inset-x-4 top-20 bg-brand-card/95 backdrop-blur-2xl border border-brand-border rounded-3xl p-6 shadow-2xl space-y-3 animate-in fade-in-0 zoom-in-95 duration-200">
           <div className="flex flex-col gap-2">
             {navLinks.map((link) => (
               <a
@@ -126,7 +126,7 @@ export const Navbar: React.FC = () => {
                     setIsMobileMenuOpen(false);
                   }
                 }}
-                className="flex items-center justify-between p-3 rounded-xl text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                className="flex items-center justify-between p-3 rounded-xl text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <span>{link.name}</span>
               </a>

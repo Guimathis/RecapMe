@@ -80,7 +80,7 @@ export const SpoilerLockController: React.FC<SpoilerLockControllerProps> = ({
 
         {/* Seletores de Temporada e Episódio */}
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-          <div className="flex items-center gap-2 bg-[#0d0d14] border border-brand-border rounded-xl px-3.5 py-2 shadow-sm">
+          <div className="flex items-center gap-2 bg-brand-inset border border-brand-border rounded-xl px-3.5 py-2 shadow-sm">
             <span className="text-xs text-gray-400 font-medium">Temporada:</span>
             <select
               value={currentProgress.season}
@@ -95,7 +95,7 @@ export const SpoilerLockController: React.FC<SpoilerLockControllerProps> = ({
             </select>
           </div>
 
-          <div className="flex items-center gap-2 bg-[#0d0d14] border border-brand-border rounded-xl px-3.5 py-2 shadow-sm">
+          <div className="flex items-center gap-2 bg-brand-inset border border-brand-border rounded-xl px-3.5 py-2 shadow-sm">
             <span className="text-xs text-gray-400 font-medium">Episódio:</span>
             <select
               value={currentProgress.episode}
@@ -124,7 +124,7 @@ export const SpoilerLockController: React.FC<SpoilerLockControllerProps> = ({
               variant="secondary"
               size="sm"
               onClick={handleUnlockAll}
-              className="h-10 rounded-xl gap-1.5 text-xs bg-[#ff5500]/20 hover:bg-[#ff5500]/30 text-[#ff5500] border border-[#ff5500]/40 font-bold cursor-pointer"
+              className="h-10 rounded-xl gap-1.5 text-xs bg-brand-orange/20 hover:bg-brand-orange/30 text-brand-orange border border-brand-orange/40 font-bold cursor-pointer"
             >
               <CheckCircle2 className="h-4 w-4" /> Já vi tudo
             </Button>

@@ -150,8 +150,8 @@ export const TrendingPeekCarousel: React.FC<TrendingPeekCarouselProps> = ({
             onClick={() => handleScroll('left')}
             disabled={!canScrollLeft}
             className={cn(
-              "p-2 rounded-full bg-brand-card border border-brand-border text-white transition-all",
-              canScrollLeft ? "hover:bg-brand-purple hover:border-brand-purple cursor-pointer shadow-lg" : "opacity-30 cursor-not-allowed"
+              "p-2 rounded-full bg-brand-card border border-brand-border text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background",
+              canScrollLeft ? "hover:bg-brand-purple hover:border-brand-purple cursor-pointer shadow-lg active:scale-95" : "opacity-30 cursor-not-allowed"
             )}
             aria-label="Anterior"
           >
@@ -161,8 +161,8 @@ export const TrendingPeekCarousel: React.FC<TrendingPeekCarouselProps> = ({
             onClick={() => handleScroll('right')}
             disabled={!canScrollRight}
             className={cn(
-              "p-2 rounded-full bg-brand-card border border-brand-border text-white transition-all",
-              canScrollRight ? "hover:bg-brand-purple hover:border-brand-purple cursor-pointer shadow-lg" : "opacity-30 cursor-not-allowed"
+              "p-2 rounded-full bg-brand-card border border-brand-border text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background",
+              canScrollRight ? "hover:bg-brand-purple hover:border-brand-purple cursor-pointer shadow-lg active:scale-95" : "opacity-30 cursor-not-allowed"
             )}
             aria-label="Próximo"
           >

@@ -61,10 +61,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         <button
           onClick={() => handleFilterClick('ALL')}
           className={cn(
-            "px-5 py-2.5 rounded-full font-medium text-sm transition-all cursor-pointer",
+            "px-5 py-2.5 rounded-full font-medium text-sm transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background active:scale-95",
             selectedFilter === 'ALL'
               ? "bg-brand-purple text-white glow-active scale-105"
-              : "bg-brand-card border border-brand-border text-gray-300 hover:text-white hover:bg-gray-800"
+              : "bg-brand-card border border-brand-border text-gray-300 hover:text-white hover:bg-white/5"
           )}
         >
           Todos
@@ -72,10 +72,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         <button
           onClick={() => handleFilterClick('SERIES')}
           className={cn(
-            "px-5 py-2.5 rounded-full font-medium text-sm transition-all cursor-pointer",
+            "px-5 py-2.5 rounded-full font-medium text-sm transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background active:scale-95",
             selectedFilter === 'SERIES'
               ? "bg-brand-purple text-white glow-active scale-105"
-              : "bg-brand-card border border-brand-border text-gray-300 hover:text-white hover:bg-gray-800"
+              : "bg-brand-card border border-brand-border text-gray-300 hover:text-white hover:bg-white/5"
           )}
         >
           Séries
@@ -83,10 +83,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         <button
           onClick={() => handleFilterClick('ANIME')}
           className={cn(
-            "px-5 py-2.5 rounded-full font-medium text-sm transition-all cursor-pointer",
+            "px-5 py-2.5 rounded-full font-medium text-sm transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background active:scale-95",
             selectedFilter === 'ANIME'
               ? "bg-brand-purple text-white glow-active scale-105"
-              : "bg-brand-card border border-brand-border text-gray-300 hover:text-white hover:bg-gray-800"
+              : "bg-brand-card border border-brand-border text-gray-300 hover:text-white hover:bg-white/5"
           )}
         >
           Animes
@@ -94,10 +94,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         <button
           onClick={() => handleFilterClick('MOVIE')}
           className={cn(
-            "px-5 py-2.5 rounded-full font-medium text-sm transition-all cursor-pointer",
+            "px-5 py-2.5 rounded-full font-medium text-sm transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background active:scale-95",
             selectedFilter === 'MOVIE'
               ? "bg-brand-purple text-white glow-active scale-105"
-              : "bg-brand-card border border-brand-border text-gray-300 hover:text-white hover:bg-gray-800"
+              : "bg-brand-card border border-brand-border text-gray-300 hover:text-white hover:bg-white/5"
           )}
         >
           Filmes

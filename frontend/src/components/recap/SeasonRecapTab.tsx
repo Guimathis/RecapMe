@@ -34,7 +34,7 @@ export const SeasonRecapTab: React.FC<SeasonRecapTabProps> = ({ recap }) => {
             {recap.keyTakeaways.map((point, index) => (
               <li
                 key={index}
-                className="flex items-start gap-3 p-4 rounded-xl bg-[#0d0d14] border border-brand-border text-xs sm:text-sm text-gray-300 leading-relaxed font-light"
+                className="flex items-start gap-3 p-4 rounded-xl bg-brand-inset border border-brand-border text-xs sm:text-sm text-gray-300 leading-relaxed font-light"
               >
                 <CheckCircle className="h-4 w-4 text-brand-purple shrink-0 mt-0.5" />
                 <span>{point}</span>

@@ -28,7 +28,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ media, className }) => {
       )}
     >
       {/* Poster Image Container */}
-      <div className="relative w-full h-full overflow-hidden bg-[#0d0d14]">
+      <div className="relative w-full h-full overflow-hidden bg-brand-inset">
         {media.posterUrl ? (
           <img
             src={media.posterUrl}
@@ -52,13 +52,8 @@ export const MediaCard: React.FC<MediaCardProps> = ({ media, className }) => {
         {/* Top Badges */}
         <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10">
           <Badge
-            variant={media.type === 'ANIME' ? 'warning' : 'default'}
-            className={cn(
-              "backdrop-blur-md font-bold text-[10px] uppercase tracking-wider py-0.5 px-2",
-              media.type === 'ANIME'
-                ? "bg-brand-purple/20 text-brand-purple border-brand-purple/40"
-                : "bg-[#ff5500]/20 text-[#ff5500] border-[#ff5500]/40"
-            )}
+            variant={media.type === 'ANIME' ? 'anime' : 'series'}
+            className="backdrop-blur-md py-0.5 px-2"
           >
             {media.type === 'ANIME' ? 'Anime' : media.type === 'MOVIE' ? 'Filme' : 'Série'}
           </Badge>
@@ -68,7 +63,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ media, className }) => {
             onClick={toggleBookmark}
             aria-label="Salvar obra"
             className={cn(
-              "bg-brand-dark/80 backdrop-blur-md p-1.5 rounded-lg text-gray-300 hover:text-white transition-opacity duration-200 border border-brand-border/60",
+              "bg-brand-dark/80 backdrop-blur-md p-1.5 rounded-lg text-gray-300 hover:text-white transition-opacity duration-200 border border-brand-border/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               bookmarked ? "opacity-100 text-brand-purple" : "opacity-0 group-hover:opacity-100"
             )}
           >

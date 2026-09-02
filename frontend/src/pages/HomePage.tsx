@@ -108,9 +108,6 @@ export const HomePage: React.FC = () => {
           <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
             Obras Populares para Recapitular
           </h2>
-          <span className="text-xs text-gray-400 font-medium hidden sm:inline uppercase tracking-wider">
-            Séries, Animes & Filmes
-          </span>
         </div>
 
         {loadingPopular ? (
@@ -141,9 +138,7 @@ export const HomePage: React.FC = () => {
           <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
             Mais Bem Avaliados de Todos os Tempos
           </h2>
-          <span className="text-xs text-gray-400 font-medium hidden sm:inline uppercase tracking-wider">
-            Aclamados pela crítica e público
-          </span>
+
         </div>
 
         {loadingMostRated ? (

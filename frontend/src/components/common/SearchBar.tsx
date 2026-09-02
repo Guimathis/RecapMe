@@ -78,7 +78,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       <div className="absolute inset-0 bg-gradient-to-r from-brand-purple/25 via-pink-500/20 to-brand-purple/25 blur-xl rounded-full opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
       {/* Input de Busca */}
-      <div className="relative flex items-center bg-[#0d0d14] border border-brand-border group-focus-within:border-brand-purple/70 rounded-full px-6 py-4 shadow-2xl transition-all duration-300">
+      <div className="relative flex items-center bg-brand-inset border border-brand-border group-focus-within:border-brand-purple/70 rounded-full px-6 py-4 shadow-2xl transition-all duration-300">
         <div className="mr-3 text-brand-purple flex items-center justify-center">
           {isLoading ? (
             <Loader2 className="h-5 w-5 md:h-6 md:w-6 animate-spin text-brand-purple" />
@@ -98,7 +98,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           <button
             type="button"
             onClick={clearQuery}
-            className="ml-2 text-gray-500 hover:text-white transition-colors p-1"
+            className="ml-2 text-gray-500 hover:text-white transition-colors p-1 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Limpar busca"
           >
             <X className="h-4 w-4" />
@@ -108,7 +108,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
       {/* Dropdown de Resultados */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-3 z-50 rounded-2xl bg-[#111116]/95 backdrop-blur-2xl shadow-2xl shadow-black/90 overflow-hidden border border-brand-border divide-y divide-brand-border/40 max-h-96 overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-150 hide-scrollbar">
+        <div className="absolute left-0 right-0 top-full mt-3 z-50 rounded-2xl bg-brand-card/95 backdrop-blur-2xl shadow-2xl shadow-black/90 overflow-hidden border border-brand-border divide-y divide-brand-border/40 max-h-96 overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-150 hide-scrollbar">
           {results.length === 0 && !isLoading ? (
             <div className="p-6 text-center text-sm text-gray-400">
               Nenhuma obra encontrada para &quot;{query}&quot;. Tente o nome original em japonês/inglês ou em português.
@@ -119,7 +119,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                 key={`${item.type}-${item.externalId}`}
                 type="button"
                 onClick={() => handleSelect(item)}
-                className="w-full p-4 flex items-center gap-4 hover:bg-[#1a1a24] transition-colors text-left group/item"
+                className="w-full p-4 flex items-center gap-4 hover:bg-white/5 transition-colors text-left group/item focus-visible:outline-none focus-visible:bg-white/10"
               >
                 {item.posterUrl ? (
                   <img
@@ -152,13 +152,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                   </p>
                 </div>
                 <Badge
-                  variant={item.type === 'ANIME' ? 'warning' : 'default'}
-                  className={cn(
-                    "text-[10px] uppercase font-bold flex-shrink-0",
-                    item.type === 'ANIME'
-                      ? "bg-brand-purple/20 text-brand-purple border-brand-purple/40"
-                      : "bg-[#ff5500]/20 text-[#ff5500] border-[#ff5500]/40"
-                  )}
+                  variant={item.type === 'ANIME' ? 'anime' : 'series'}
+                  className="flex-shrink-0"
                 >
                   {item.type}
                 </Badge>

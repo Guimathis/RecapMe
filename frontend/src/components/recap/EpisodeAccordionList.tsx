@@ -66,7 +66,7 @@ export const EpisodeAccordionList: React.FC<EpisodeAccordionListProps> = ({
             <AccordionItem
               key={ep.episodeNumber}
               value={`ep-${ep.episodeNumber}`}
-              className="border border-brand-border rounded-xl px-4 bg-[#0d0d14] overflow-hidden"
+              className="border border-brand-border rounded-xl px-4 bg-brand-inset overflow-hidden"
             >
               <AccordionTrigger className="hover:no-underline py-4">
                 <div className="flex items-center gap-3.5 text-left">
@@ -129,8 +129,9 @@ export const EpisodeAccordionList: React.FC<EpisodeAccordionListProps> = ({
                       <Button
                         type="button"
                         size="sm"
+                        variant="orange"
                         onClick={(e) => toggleReveal(ep.episodeNumber, e)}
-                        className="h-9 rounded-xl text-xs gap-2 bg-[#ff5500] hover:bg-[#ff7733] text-white font-bold px-4 shadow-lg cursor-pointer"
+                        className="h-9 rounded-xl text-xs gap-2 px-4 shadow-lg"
                       >
                         <Eye className="h-4 w-4" /> Revelar este episódio
                       </Button>
