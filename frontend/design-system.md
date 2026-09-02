@@ -38,8 +38,8 @@ A análise minuciosa da árvore de componentes e folhas de estilo revela as segu
 | **`SpoilerLockController`**| `frontend/src/components/media/SpoilerLockController.tsx` | Barra de configuração do limite de temporada/episódio assistido pelo usuário. | Usar exclusivamente em páginas de detalhe de obra com recap. |
 | **`EpisodeAccordionList`** | `frontend/src/components/recap/EpisodeAccordionList.tsx` | Listagem sanfonada de episódios com máscara blur anti-spoiler individual e badges de eventos-chave. | Não usar para resumos globais de temporadas inteiras (usar `SeasonRecapTab`). |
 | **`SeasonRecapTab`** | `frontend/src/components/recap/SeasonRecapTab.tsx` | Apresentação do resumo narrativo geral da temporada e grade de pontos cruciais a lembrar ("key takeaways"). | Não usar para navegação episódio por episódio. |
-| **`ChatDrawer`** | `frontend/src/components/chat/ChatDrawer.tsx` | Botão flutuante tipo avatar IA e gaveta lateral de conversa com streaming, histórico e feedback. | Usar em páginas de obra onde haja contexto de mídia para consulta. |
-| **`TrendingPeekCarousel`** | `frontend/src/components/media/TrendingPeekCarousel.tsx` | Fileira horizontal de cartões de mídia com navegação por setas, snap-scroll e efeito peek na borda. | Não usar para listagens verticais densas. |
+| **`MediaCarouselSection`** | `frontend/src/components/media/MediaCarouselSection.tsx` | Carrossel horizontal unificado com navegação por setas laterais, snap-scroll, efeito peek, mocks de fallback integrados e suporte a filtros de tipo. | Não usar para listagens verticais densas. |
+| **`TrendingPeekCarousel`** | `frontend/src/components/media/TrendingPeekCarousel.tsx` | Wrapper de conveniência/retrocompatibilidade baseado em `MediaCarouselSection` para a seção de obras em alta. | Em novas seções, preferir usar `MediaCarouselSection` diretamente. |
 | **`FeaturedHeroBanner`** | `frontend/src/components/landing/FeaturedHeroBanner.tsx` | Destaque principal cinematográfico em formato de slider na Home. | Não usar em páginas internas secundárias. |
 
 ---

@@ -21,9 +21,9 @@ export const MediaCard: React.FC<MediaCardProps> = ({ media, className }) => {
 
   return (
     <Link
-      to={`/media/${media.type}/${media.externalId}`}
+      to={`/media/${media.type || 'ANIME'}/${media.externalId || media.id || ''}`}
       className={cn(
-        "group flex flex-col aspect-[2/3] rounded-2xl overflow-hidden bg-brand-card border border-brand-border hover:border-brand-purple transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-brand-purple/20 relative cursor-pointer",
+        "group flex flex-col aspect-[2/3] rounded-2xl overflow-hidden bg-brand-card border border-brand-border transition-all duration-300 hover:scale-105 hover:z-20 shadow-xl relative cursor-pointer transform-gpu",
         className
       )}
     >

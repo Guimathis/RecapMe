@@ -1,6 +1,7 @@
 export type MediaType = 'MOVIE' | 'SERIES' | 'ANIME';
 
 export interface MediaItem {
+  id?: string;
   externalId: string;
   type: MediaType;
   source: string;

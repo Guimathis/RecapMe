@@ -72,9 +72,9 @@ export const FeaturedHeroBanner: React.FC<FeaturedHeroBannerProps> = ({ items })
 
   const displayList = items && items.length > 0
     ? items.slice(0, 5).map((item, idx) => ({
-        id: item.externalId,
-        type: item.type,
-        title: item.title,
+        id: item.externalId || item.id || `featured-${idx}`,
+        type: item.type || 'ANIME',
+        title: item.title || 'Sem título',
         subtitle: item.originalTitle && item.originalTitle !== item.title ? item.originalTitle : 'Recapitulação sem Spoilers',
         rating: 'A16',
         audio: 'Leg | Dub',
