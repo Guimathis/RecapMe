@@ -3,7 +3,6 @@ import ReactMarkdown from 'react-markdown';
 import {
   Send,
   X,
-  Sparkles,
   ShieldCheck,
   RotateCcw,
   ThumbsUp,
@@ -142,45 +141,63 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
 
   return (
     <>
-      {/* Botão Flutuante de Acionamento */}
+      {/* Avatar IA Flutuante (Inspirado no canto inferior direito do prototype) */}
       {!isOpen && (
-        <div className="fixed bottom-6 right-6 z-40 animate-in fade-in zoom-in-95 duration-300">
-          <Button
-            onClick={() => openChat(mediaKey, mediaTitle)}
-            variant="gradient"
-            size="lg"
-            className="rounded-full shadow-2xl shadow-purple-600/40 hover:scale-105 transition-transform flex items-center gap-2.5 px-5 py-6"
-          >
-            <div className="relative">
-              <Sparkles className="h-5 w-5 text-purple-200 animate-pulse" />
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label="Abrir assistente IA sem spoilers"
+          onClick={() => openChat(mediaKey, mediaTitle)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              openChat(mediaKey, mediaTitle);
+            }
+          }}
+          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-40 flex flex-col items-end cursor-pointer group select-none animate-in fade-in zoom-in-95 duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full"
+        >
+          {/* Tooltip speech bubble */}
+          <div className="bg-white text-black text-xs font-bold px-3 py-1.5 rounded-t-lg rounded-bl-lg mb-2 shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 flex items-center gap-1.5">
+            <Bot className="h-3.5 w-3.5 text-brand-purple" />
+            <span>Sem spoilers! Pergunte-me!</span>
+          </div>
+
+          {/* Avatar Circle */}
+          <div className="relative">
+            <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-tr from-brand-purple via-indigo-600 to-pink-500 rounded-full overflow-hidden border-3 border-brand-card shadow-[0_0_25px_rgba(157,78,221,0.5)] group-hover:scale-110 transition-transform flex items-center justify-center text-white">
+              <Bot className="h-7 w-7" />
             </div>
-            <span className="font-bold text-sm">Conversar com a IA</span>
-            <Badge variant="success" className="ml-1 text-[10px] py-0 px-2 bg-emerald-500/20 text-emerald-300 border-emerald-500/40">
-              T{progress.season} E{progress.episode}
-            </Badge>
-          </Button>
+            {/* Status dot */}
+            <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-brand-dark" />
+          </div>
         </div>
       )}
 
       {/* Backdrop e Drawer Lateral */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="w-full sm:w-[480px] h-full bg-card/95 border-l border-border/60 shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-right duration-300 glass"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Chat sobre ${mediaTitle}`}
+            className="w-full sm:w-[480px] h-full bg-brand-inset border-l border-brand-border shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-right duration-300"
           >
             {/* Header do Chat */}
-            <div className="p-4 border-b border-border/40 flex items-center justify-between bg-background/80">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
-                  <Sparkles className="h-5 w-5" />
+            <div className="p-4 border-b border-brand-border flex items-center justify-between bg-brand-card">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-brand-purple/20 border border-brand-purple/30 flex items-center justify-center text-brand-purple">
+                  <Bot className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-foreground line-clamp-1">
+                  <h3 className="font-bold text-sm text-white line-clamp-1">
                     {mediaTitle}
                   </h3>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <Badge variant="success" className="text-[10px] py-0 px-1.5 gap-1">
-                      <ShieldCheck className="h-2.5 w-2.5" />
+                    <Badge
+                      variant="success"
+                      className="text-[10px] py-0 px-2 gap-1 bg-brand-purple/20 text-brand-purple border-brand-purple/40"
+                    >
+                      <ShieldCheck className="h-3 w-3" />
                       {progress.unlockedAll ? 'Sem spoilers' : `Limite: T${progress.season} E${progress.episode}`}
                     </Badge>
                   </div>
@@ -195,7 +212,7 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
                     size="icon"
                     onClick={() => clearChat(mediaKey)}
                     title="Limpar histórico"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    className="h-8 w-8 text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer"
                   >
                     <RotateCcw className="h-4 w-4" />
                   </Button>
@@ -205,7 +222,7 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
                   variant="ghost"
                   size="icon"
                   onClick={closeChat}
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  className="h-8 w-8 text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -213,24 +230,24 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
             </div>
 
             {/* Lista de Mensagens */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 hide-scrollbar">
               {messages.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
-                  <div className="h-14 w-14 rounded-2xl bg-purple-600/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                  <div className="h-14 w-14 rounded-2xl bg-brand-purple/15 border border-brand-purple/30 flex items-center justify-center text-brand-purple">
                     <Bot className="h-7 w-7" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-base text-foreground">
+                    <h4 className="font-bold text-base text-white">
                       Tire suas dúvidas sobre {mediaTitle}
                     </h4>
-                    <p className="text-xs text-muted-foreground mt-1 max-w-xs leading-relaxed">
+                    <p className="text-xs text-gray-400 mt-1 max-w-xs leading-relaxed font-light">
                       Pergunte sobre acontecimentos, personagens e tramas. A IA respeita estritamente o seu limite configurado (T{progress.season} E{progress.episode}).
                     </p>
                   </div>
 
                   {/* Sugestões Rápidas */}
-                  <div className="w-full space-y-2 pt-2">
-                    <span className="text-[11px] font-semibold uppercase text-muted-foreground tracking-wider block">
+                  <div className="w-full space-y-2 pt-4">
+                    <span className="text-[11px] font-semibold uppercase text-gray-500 tracking-wider block">
                       Perguntas Sugeridas:
                     </span>
                     {suggestedQuestions.map((q, idx) => (
@@ -238,7 +255,7 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
                         key={idx}
                         type="button"
                         onClick={() => handleSend(q)}
-                        className="w-full text-left p-2.5 rounded-xl bg-background/60 hover:bg-purple-600/10 border border-border/40 hover:border-purple-500/30 text-xs text-muted-foreground hover:text-purple-300 transition-all"
+                        className="w-full text-left p-3 rounded-xl bg-brand-card hover:bg-white/5 border border-brand-border hover:border-brand-purple text-xs text-gray-300 hover:text-white transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         ✨ {q}
                       </button>
@@ -250,7 +267,7 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
                   <div
                     key={msg.id}
                     className={cn(
-                      "flex gap-2.5 max-w-[90%]",
+                      "flex gap-3 max-w-[90%]",
                       msg.role === 'user' ? "ml-auto flex-row-reverse" : "mr-auto"
                     )}
                   >
@@ -258,8 +275,8 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
                       className={cn(
                         "h-7 w-7 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold shadow-sm",
                         msg.role === 'user'
-                          ? "bg-purple-600 text-white"
-                          : "bg-slate-800 text-purple-400 border border-border"
+                          ? "bg-brand-purple text-white"
+                          : "bg-brand-card text-brand-purple border border-brand-border"
                       )}
                     >
                       {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
@@ -270,8 +287,8 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
                         className={cn(
                           "rounded-2xl p-3.5 text-xs sm:text-sm leading-relaxed shadow-md",
                           msg.role === 'user'
-                            ? "bg-purple-600 text-white rounded-tr-none"
-                            : "bg-card border border-border/80 text-foreground rounded-tl-none"
+                            ? "bg-brand-purple text-white rounded-tr-none"
+                            : "bg-brand-card border border-brand-border text-gray-200 rounded-tl-none"
                         )}
                       >
                         {msg.role === 'assistant' ? (
@@ -285,14 +302,14 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
 
                       {/* Feedback buttons for Assistant messages */}
                       {msg.role === 'assistant' && msg.content && (
-                        <div className="flex items-center justify-between text-[10px] text-muted-foreground px-1">
+                        <div className="flex items-center justify-between text-[10px] text-gray-400 px-1">
                           <span>{msg.timestamp}</span>
                           <div className="flex items-center gap-1">
                             <button
                               type="button"
                               onClick={() => handleFeedbackClick(msg.id, 'POSITIVE')}
                               className={cn(
-                                "p-1 rounded hover:bg-muted transition-colors",
+                                "p-1 rounded hover:bg-white/5 transition-colors cursor-pointer",
                                 msg.feedback === 'POSITIVE' && "text-emerald-400"
                               )}
                               title="Resposta útil"
@@ -303,7 +320,7 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
                               type="button"
                               onClick={() => handleFeedbackClick(msg.id, 'NEGATIVE')}
                               className={cn(
-                                "p-1 rounded hover:bg-muted transition-colors",
+                                "p-1 rounded hover:bg-white/5 transition-colors cursor-pointer",
                                 msg.feedback === 'NEGATIVE' && "text-red-400"
                               )}
                               title="Resposta ruim / com spoiler"
@@ -318,16 +335,16 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
                 ))
               )}
               {isStreaming && (
-                <div className="flex items-center gap-2 text-xs text-purple-400 p-2 animate-pulse">
+                <div className="flex items-center gap-2 text-xs text-brand-purple p-2 animate-pulse">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span>A IA está digitando...</span>
+                  <span>A IA está sintetizando a resposta...</span>
                 </div>
               )}
               <div ref={messagesEndRef} />
             </div>
 
             {/* Input de Mensagem */}
-            <div className="p-3.5 border-t border-border/40 bg-background/80">
+            <div className="p-3.5 border-t border-brand-border bg-brand-card">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -341,14 +358,13 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={`Pergunte algo até T${progress.season} E${progress.episode}...`}
                   disabled={isStreaming}
-                  className="flex-1 bg-card border border-border/80 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-purple-500/80 focus:ring-1 focus:ring-purple-500/40"
+                  className="flex-1 bg-brand-inset border border-brand-border rounded-full px-4 py-3 text-xs sm:text-sm text-white placeholder:text-gray-500 outline-none focus:border-brand-purple"
                 />
                 <Button
                   type="submit"
                   size="icon"
                   disabled={!input.trim() || isStreaming}
-                  variant="gradient"
-                  className="h-10 w-10 rounded-xl shrink-0"
+                  className="h-10 w-10 rounded-full shrink-0 bg-brand-purple hover:bg-brand-purple/80 text-white cursor-pointer"
                 >
                   <Send className="h-4 w-4" />
                 </Button>

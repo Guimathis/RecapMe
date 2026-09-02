@@ -1,6 +1,7 @@
 export type MediaType = 'MOVIE' | 'SERIES' | 'ANIME';
 
 export interface MediaItem {
+  id?: string;
   externalId: string;
   type: MediaType;
   source: string;
@@ -12,6 +13,11 @@ export interface MediaItem {
   releaseYear?: number;
   totalSeasons?: number;
   totalEpisodes?: number;
+  score?: number;
+  status?: string;
+  seasonPeriod?: string;
+  durationMinutes?: number;
+  genres?: string[];
 }
 
 export interface MediaDetail extends MediaItem {

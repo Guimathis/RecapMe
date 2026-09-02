@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Loader2, Film, Tv, Sparkles, X } from 'lucide-react';
+import { Search, Loader2, Film, X } from 'lucide-react';
 import { mediaService } from '@/services/mediaService';
-import { MediaItem, MediaType } from '@/types/media';
+import { MediaItem } from '@/types/media';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -18,7 +18,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   className,
 }) => {
   const [query, setQuery] = useState(initialQuery);
-  const [selectedType, setSelectedType] = useState<MediaType | undefined>(undefined);
   const [results, setResults] = useState<MediaItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -35,7 +34,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     const timer = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const data = await mediaService.search(query, selectedType);
+        const data = await mediaService.search(query);
         setResults(data.items || []);
         setIsOpen(true);
       } catch (err) {
@@ -46,7 +45,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query, selectedType]);
+  }, [query]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -74,96 +73,45 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   return (
-    <div className={cn("relative w-full max-w-2xl mx-auto", className)} ref={dropdownRef}>
-      {/* Pills de Categoria */}
-      <div className="flex items-center justify-center gap-2 mb-3">
-        <button
-          type="button"
-          onClick={() => setSelectedType(undefined)}
-          className={cn(
-            "px-3.5 py-1 text-xs font-semibold rounded-full transition-all duration-200",
-            selectedType === undefined
-              ? "bg-purple-600 text-white shadow-md shadow-purple-500/20 scale-105"
-              : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-          )}
-        >
-          ✨ Todos
-        </button>
-        <button
-          type="button"
-          onClick={() => setSelectedType('SERIES')}
-          className={cn(
-            "px-3.5 py-1 text-xs font-semibold rounded-full transition-all duration-200 flex items-center gap-1",
-            selectedType === 'SERIES'
-              ? "bg-purple-600 text-white shadow-md shadow-purple-500/20 scale-105"
-              : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-          )}
-        >
-          <Tv className="h-3 w-3" /> Séries
-        </button>
-        <button
-          type="button"
-          onClick={() => setSelectedType('ANIME')}
-          className={cn(
-            "px-3.5 py-1 text-xs font-semibold rounded-full transition-all duration-200 flex items-center gap-1",
-            selectedType === 'ANIME'
-              ? "bg-purple-600 text-white shadow-md shadow-purple-500/20 scale-105"
-              : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-          )}
-        >
-          <Sparkles className="h-3 w-3" /> Animes
-        </button>
-        <button
-          type="button"
-          onClick={() => setSelectedType('MOVIE')}
-          className={cn(
-            "px-3.5 py-1 text-xs font-semibold rounded-full transition-all duration-200 flex items-center gap-1",
-            selectedType === 'MOVIE'
-              ? "bg-purple-600 text-white shadow-md shadow-purple-500/20 scale-105"
-              : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-          )}
-        >
-          <Film className="h-3 w-3" /> Filmes
-        </button>
-      </div>
+    <div className={cn("relative w-full max-w-3xl mx-auto scroll-mt-28 group", className)} ref={dropdownRef} id="search-section">
+      {/* Background glow on hover/focus */}
+      <div className="absolute inset-0 bg-gradient-to-r from-brand-purple/25 via-pink-500/20 to-brand-purple/25 blur-xl rounded-full opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
       {/* Input de Busca */}
-      <div className="relative group">
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 opacity-20 blur-lg group-hover:opacity-40 transition-opacity" />
-        <div className="relative flex items-center bg-card/90 border border-border/80 rounded-2xl shadow-xl overflow-hidden focus-within:border-purple-500/80 focus-within:ring-2 focus-within:ring-purple-500/30 transition-all">
-          <div className="pl-4 pr-2 text-muted-foreground">
-            {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin text-purple-400" />
-            ) : (
-              <Search className="h-5 w-5 text-purple-400" />
-            )}
-          </div>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => results.length > 0 && setIsOpen(true)}
-            placeholder="Digite o nome de uma série, anime ou filme (ex: Game of Thrones, Naruto)..."
-            className="w-full bg-transparent py-3.5 pr-10 text-sm md:text-base text-foreground placeholder:text-muted-foreground/70 outline-none"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={clearQuery}
-              className="pr-4 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
+      <div className="relative flex items-center bg-brand-inset border border-brand-border group-focus-within:border-brand-purple/70 rounded-full px-6 py-4 shadow-2xl transition-all duration-300">
+        <div className="mr-3 text-brand-purple flex items-center justify-center">
+          {isLoading ? (
+            <Loader2 className="h-5 w-5 md:h-6 md:w-6 animate-spin text-brand-purple" />
+          ) : (
+            <Search className="h-5 w-5 md:h-6 md:w-6 text-brand-purple" />
           )}
         </div>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => results.length > 0 && setIsOpen(true)}
+          placeholder="Digite o nome de uma série, anime ou filme (ex: Game of Thrones, Naruto)..."
+          className="bg-transparent border-none outline-none w-full text-white placeholder-gray-500 text-sm md:text-base font-normal"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={clearQuery}
+            className="ml-2 text-gray-500 hover:text-white transition-colors p-1 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Limpar busca"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Dropdown de Resultados */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-xl glass-card shadow-2xl overflow-hidden border border-border/80 divide-y divide-border/40 max-h-96 overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-150">
+        <div className="absolute left-0 right-0 top-full mt-3 z-50 rounded-2xl bg-brand-card/95 backdrop-blur-2xl shadow-2xl shadow-black/90 overflow-hidden border border-brand-border divide-y divide-brand-border/40 max-h-96 overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-150 hide-scrollbar">
           {results.length === 0 && !isLoading ? (
-            <div className="p-6 text-center text-sm text-muted-foreground">
-              Nenhuma obra encontrada para &quot;{query}&quot;. Tente outro termo ou ajuste os filtros.
+            <div className="p-6 text-center text-sm text-gray-400">
+              Nenhuma obra encontrada para &quot;{query}&quot;. Tente o nome original em japonês/inglês ou em português.
             </div>
           ) : (
             results.map((item) => (
@@ -171,39 +119,42 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                 key={`${item.type}-${item.externalId}`}
                 type="button"
                 onClick={() => handleSelect(item)}
-                className="w-full p-3.5 flex items-center gap-3.5 hover:bg-white/5 transition-colors text-left group"
+                className="w-full p-4 flex items-center gap-4 hover:bg-white/5 transition-colors text-left group/item focus-visible:outline-none focus-visible:bg-white/10"
               >
                 {item.posterUrl ? (
                   <img
                     src={item.posterUrl}
                     alt={item.title}
-                    className="h-14 w-10 object-cover rounded-md shadow-md flex-shrink-0 group-hover:scale-105 transition-transform"
+                    className="h-16 w-11 object-cover rounded-lg shadow-md flex-shrink-0 group-hover/item:scale-105 transition-transform"
                     onError={(e) => {
                       (e.target as HTMLElement).style.display = 'none';
                     }}
                   />
                 ) : (
-                  <div className="h-14 w-10 bg-muted/60 rounded-md flex items-center justify-center flex-shrink-0 text-muted-foreground">
+                  <div className="h-16 w-11 bg-brand-card border border-brand-border rounded-lg flex items-center justify-center flex-shrink-0 text-gray-500">
                     <Film className="h-5 w-5" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-foreground truncate group-hover:text-purple-400 transition-colors">
+                    <h4 className="font-bold text-white truncate group-hover/item:text-brand-purple transition-colors text-sm sm:text-base">
                       {item.title}
                     </h4>
                     {item.releaseYear && (
-                      <span className="text-xs text-muted-foreground">({item.releaseYear})</span>
+                      <span className="text-xs text-gray-400">({item.releaseYear})</span>
                     )}
                   </div>
                   {item.originalTitle && item.originalTitle !== item.title && (
-                    <p className="text-xs text-muted-foreground truncate">{item.originalTitle}</p>
+                    <p className="text-xs text-gray-400 truncate">{item.originalTitle}</p>
                   )}
-                  <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                  <p className="text-xs text-gray-400 line-clamp-1 mt-1">
                     {item.overview || 'Sinopse disponível na página de detalhes.'}
                   </p>
                 </div>
-                <Badge variant={item.type === 'ANIME' ? 'warning' : 'default'} className="text-[10px] uppercase font-bold flex-shrink-0">
+                <Badge
+                  variant={item.type === 'ANIME' ? 'anime' : 'series'}
+                  className="flex-shrink-0"
+                >
                   {item.type}
                 </Badge>
               </button>

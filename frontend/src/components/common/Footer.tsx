@@ -1,19 +1,23 @@
 import React from 'react';
-import { Sparkles, Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="border-t border-border/40 py-8 bg-background/80 text-muted-foreground mt-auto">
-      <div className="container max-w-7xl mx-auto px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-purple-400" />
-          <span>
-            <strong className="text-foreground">RecapMe</strong> — Resumos inteligentes e contextualizados com Spring AI & TMDb/Jikan.
-          </span>
+    <footer className="border-t border-brand-border/60 py-12 bg-[#050505] text-gray-400 mt-auto relative z-10">
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center gap-6">
+        {/* Logo & Tagline */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
+          <Link to="/" className="flex items-center group">
+            <span className="font-black text-xl tracking-tight text-white hover:text-white transition-colors">
+              recap<span className="text-brand-purple">.me</span>
+            </span>
+          </Link>
         </div>
-        <p className="flex items-center gap-1">
-          Feito com <Heart className="h-3 w-3 text-red-500 fill-red-500 inline" /> para cinéfilos e otakus.
-        </p>
+
+        {/* Links & Copyright */}
+        <div className="flex flex-col sm:flex-row items-center gap-6 text-xs text-gray-500">
+          <p>© 2026 RecapMe.</p>
+        </div>
       </div>
     </footer>
   );

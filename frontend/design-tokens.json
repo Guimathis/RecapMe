@@ -1,0 +1,257 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "RecapMe Design Tokens",
+  "version": "1.1.0",
+  "description": "Design tokens auditados, padronizados e unificados em variáveis CSS HSL no RecapMe",
+  "tokens": {
+    "color": {
+      "background": {
+        "base": {
+          "value": "hsl(0, 0%, 2%)",
+          "rawHsl": "0 0% 2%",
+          "hexEquivalent": "#050505",
+          "description": "Fundo base escuro da aplicação (body e canvas raiz)",
+          "evidence": "frontend/src/index.css:7,42",
+          "variable": "--background",
+          "tailwind": "bg-background / bg-brand-dark"
+        },
+        "elevated": {
+          "value": "hsl(240, 13%, 7%)",
+          "rawHsl": "240 13% 7%",
+          "hexEquivalent": "#111116",
+          "description": "Fundo elevado para cartões, seções estruturais e modais",
+          "evidence": "frontend/src/index.css:10,18, frontend/tailwind.config.js:25",
+          "variable": "--card / --brand-card",
+          "tailwind": "bg-card / bg-brand-card"
+        },
+        "inset": {
+          "value": "hsl(240, 21%, 6%)",
+          "rawHsl": "240 21% 6%",
+          "hexEquivalent": "#0d0d14",
+          "description": "Fundo afundado/recuado para inputs de busca, linhas de acordeão e containers de itens",
+          "evidence": "frontend/src/index.css:19, frontend/tailwind.config.js:26",
+          "variable": "--brand-inset",
+          "tailwind": "bg-brand-inset"
+        },
+        "hover": {
+          "value": "hsl(240, 16%, 12%)",
+          "hexEquivalent": "#1a1a24",
+          "description": "Fundo interativo para hover em itens de menu, dropdown e listas",
+          "evidence": "frontend/src/components/common/SearchBar.tsx:122, frontend/src/components/chat/ChatDrawer.tsx:246"
+        },
+        "muted": {
+          "value": "hsl(240, 10%, 12%)",
+          "rawHsl": "240 10% 12%",
+          "hexEquivalent": "#1c1c22",
+          "description": "Fundo suavizado para trilho de abas e placeholders",
+          "evidence": "frontend/src/index.css:32, frontend/src/components/ui/tabs.tsx:14",
+          "variable": "--muted",
+          "tailwind": "bg-muted"
+        },
+        "overlayGlass": {
+          "value": "hsla(240, 13%, 7%, 0.75)",
+          "description": "Fundo translúcido com glassmorphism para navbar e gaveta de chat",
+          "evidence": "frontend/src/index.css:94, frontend/src/components/common/Navbar.tsx:66",
+          "class": ".glass"
+        }
+      },
+      "border": {
+        "subtle": {
+          "value": "hsl(240, 20%, 15%)",
+          "rawHsl": "240 20% 15%",
+          "hexEquivalent": "#1f1f2e",
+          "description": "Borda estrutural padrão de cartões, painéis e caixas",
+          "evidence": "frontend/src/index.css:20,38, frontend/tailwind.config.js:27,33",
+          "variable": "--border / --brand-border",
+          "tailwind": "border-border / border-brand-border"
+        },
+        "translucent": {
+          "value": "rgba(255, 255, 255, 0.08)",
+          "description": "Borda com opacidade suave para efeito glass e divisores secundários",
+          "evidence": "frontend/src/index.css:97, frontend/src/components/landing/FeaturedHeroBanner.tsx:189"
+        }
+      },
+      "brand": {
+        "primary": {
+          "value": "hsl(273, 68%, 58%)",
+          "rawHsl": "273 68% 58%",
+          "hexEquivalent": "#9d4edd",
+          "description": "Roxo principal de marca, destaques, links ativos e anel de foco",
+          "evidence": "frontend/src/index.css:21,27,40, frontend/tailwind.config.js:28,37",
+          "variable": "--primary / --brand-purple / --ring",
+          "tailwind": "bg-primary / text-brand-purple / ring-ring"
+        },
+        "accentPink": {
+          "value": "hsl(335, 100%, 75%)",
+          "rawHsl": "335 100% 75%",
+          "hexEquivalent": "#ff7eb3",
+          "description": "Rosa de destaque usado em gradientes do título Hero e no avatar IA",
+          "evidence": "frontend/src/index.css:22, frontend/tailwind.config.js:29",
+          "variable": "--brand-pink",
+          "tailwind": "text-brand-pink"
+        }
+      },
+      "action": {
+        "orange": {
+          "value": "hsl(20, 100%, 50%)",
+          "rawHsl": "20 100% 50%",
+          "hexEquivalent": "#ff5500",
+          "description": "Laranja vibrante para CTA primário, desativar trava e badges",
+          "evidence": "frontend/src/index.css:23, frontend/tailwind.config.js:30",
+          "variable": "--brand-orange",
+          "tailwind": "bg-brand-orange"
+        },
+        "orangeHover": {
+          "value": "hsl(20, 100%, 60%)",
+          "rawHsl": "20 100% 60%",
+          "hexEquivalent": "#ff7733",
+          "description": "Hover do botão de ação primária laranja",
+          "evidence": "frontend/src/index.css:24, frontend/tailwind.config.js:31",
+          "variable": "--brand-orange-hover",
+          "tailwind": "hover:bg-brand-orangeHover"
+        }
+      },
+      "text": {
+        "primary": {
+          "value": "hsl(210, 40%, 98%)",
+          "rawHsl": "210 40% 98%",
+          "hexEquivalent": "#f8fafc",
+          "description": "Texto principal de alto contraste para títulos e botões",
+          "evidence": "frontend/src/index.css:8,28",
+          "variable": "--foreground / --primary-foreground",
+          "tailwind": "text-foreground / text-primary-foreground"
+        },
+        "secondary": {
+          "value": "hsl(213, 31%, 91%)",
+          "rawHsl": "213 31% 91%",
+          "hexEquivalent": "#e2e8f0",
+          "description": "Texto secundário para descrições e sinopses",
+          "evidence": "frontend/src/index.css:8",
+          "tailwind": "text-gray-300"
+        },
+        "tertiary": {
+          "value": "hsl(215.4, 16.3%, 56.9%)",
+          "rawHsl": "215.4 16.3% 56.9%",
+          "hexEquivalent": "#838e9e",
+          "description": "Metadados, contadores, links inativos e subtítulos",
+          "evidence": "frontend/src/index.css:33",
+          "variable": "--muted-foreground",
+          "tailwind": "text-muted-foreground / text-gray-400"
+        }
+      },
+      "status": {
+        "success": {
+          "value": "hsl(156, 72%, 51%)",
+          "hexEquivalent": "#34d399",
+          "description": "Indicador de status online da IA, feedback positivo e badges de sucesso",
+          "evidence": "frontend/src/components/ui/badge.tsx:17, frontend/src/components/chat/ChatDrawer.tsx:162"
+        },
+        "warning": {
+          "value": "hsl(38, 92%, 50%)",
+          "hexEquivalent": "#fbbf24",
+          "description": "Alertas de spoilers além da trava, badges de aviso e status desprotegido",
+          "evidence": "frontend/src/components/ui/badge.tsx:18, frontend/src/components/media/SpoilerLockController.tsx:55"
+        },
+        "destructive": {
+          "value": "hsl(0, 72%, 51%)",
+          "rawHsl": "0 72% 51%",
+          "hexEquivalent": "#ef4444",
+          "description": "Classificação indicativa etária (A16/A18), feedback negativo e ações de perigo",
+          "evidence": "frontend/src/index.css:36",
+          "variable": "--destructive",
+          "tailwind": "bg-destructive / text-destructive"
+        }
+      }
+    },
+    "typography": {
+      "fontFamily": {
+        "sans": {
+          "value": "'Inter', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
+          "evidence": "frontend/tailwind.config.js:18, frontend/index.html:11"
+        },
+        "mono": {
+          "value": "'JetBrains Mono', ui-monospace, monospace",
+          "evidence": "frontend/tailwind.config.js:20, frontend/index.html:11"
+        }
+      },
+      "fontSize": {
+        "2xs": { "value": "10px", "rem": "0.625rem", "evidence": "frontend/src/components/common/SearchBar.tsx:157" },
+        "xsSub": { "value": "11px", "rem": "0.6875rem", "evidence": "frontend/src/components/media/MediaCard.tsx:82" },
+        "xs": { "value": "12px", "rem": "0.75rem", "evidence": "frontend/src/components/ui/badge.tsx:6" },
+        "sm": { "value": "14px", "rem": "0.875rem", "evidence": "frontend/src/components/ui/input.tsx:13" },
+        "base": { "value": "16px", "rem": "1rem", "evidence": "frontend/src/components/landing/FeaturedHeroBanner.tsx:144" },
+        "lg": { "value": "18px", "rem": "1.125rem", "evidence": "frontend/src/components/landing/FeaturedHeroBanner.tsx:127" },
+        "xl": { "value": "20px", "rem": "1.25rem", "evidence": "frontend/src/components/recap/EpisodeAccordionList.tsx:50" },
+        "2xl": { "value": "24px", "rem": "1.5rem", "evidence": "frontend/src/components/media/TrendingPeekCarousel.tsx:143" },
+        "3xl": { "value": "30px", "rem": "1.875rem", "evidence": "frontend/src/pages/HomePage.tsx:108" },
+        "4xl": { "value": "36px", "rem": "2.25rem", "evidence": "frontend/src/components/landing/HeroSection.tsx:36" },
+        "5xl": { "value": "48px", "rem": "3rem", "evidence": "frontend/src/components/landing/HeroSection.tsx:36" },
+        "6xl": { "value": "60px", "rem": "3.75rem", "evidence": "frontend/src/components/landing/FeaturedHeroBanner.tsx:124" },
+        "7xl": { "value": "72px", "rem": "4.5rem", "evidence": "frontend/src/pages/NotFoundPage.tsx:9" }
+      },
+      "fontWeight": {
+        "light": { "value": 300, "class": "font-light", "evidence": "frontend/src/components/landing/HeroSection.tsx:48" },
+        "regular": { "value": 400, "class": "font-normal", "evidence": "frontend/src/components/common/SearchBar.tsx:96" },
+        "medium": { "value": 500, "class": "font-medium", "evidence": "frontend/src/components/ui/button.tsx:7" },
+        "semibold": { "value": 600, "class": "font-semibold", "evidence": "frontend/src/components/ui/badge.tsx:6" },
+        "bold": { "value": 700, "class": "font-bold", "evidence": "frontend/src/components/media/TrendingPeekCarousel.tsx:143" },
+        "extrabold": { "value": 800, "class": "font-extrabold", "evidence": "frontend/src/components/landing/HeroSection.tsx:36" },
+        "black": { "value": 900, "class": "font-black", "evidence": "frontend/src/components/common/Navbar.tsx:72" }
+      },
+      "lineHeight": {
+        "tight": { "value": "1.0", "class": "leading-none", "evidence": "frontend/src/components/ui/card.tsx:37" },
+        "hero": { "value": "1.1", "class": "leading-[1.1]", "evidence": "frontend/src/components/landing/HeroSection.tsx:36" },
+        "relaxed": { "value": "1.625", "class": "leading-relaxed", "evidence": "frontend/src/components/landing/FeaturedHeroBanner.tsx:145" }
+      },
+      "letterSpacing": {
+        "tighter": { "value": "-0.05em", "class": "tracking-tighter", "evidence": "frontend/src/components/landing/FeaturedHeroBanner.tsx:124" },
+        "tight": { "value": "-0.025em", "class": "tracking-tight", "evidence": "frontend/src/components/common/Navbar.tsx:72" },
+        "wider": { "value": "0.05em", "class": "tracking-wider", "evidence": "frontend/src/components/media/MediaCard.tsx:57" }
+      }
+    },
+    "spacing": {
+      "3xs": { "value": "2px", "rem": "0.125rem", "evidence": "frontend/src/components/ui/badge.tsx:6" },
+      "2xs": { "value": "4px", "rem": "0.25rem", "evidence": "frontend/src/components/chat/ChatDrawer.tsx:195" },
+      "xsSub": { "value": "6px", "rem": "0.375rem", "evidence": "frontend/src/components/media/MediaCard.tsx:71" },
+      "xs": { "value": "8px", "rem": "0.5rem", "evidence": "frontend/src/components/ui/button.tsx:23" },
+      "smSub": { "value": "10px", "rem": "0.625rem", "evidence": "frontend/src/components/landing/HeroSection.tsx:64" },
+      "sm": { "value": "12px", "rem": "0.75rem", "evidence": "frontend/src/components/landing/FeaturedHeroBanner.tsx:133" },
+      "mdSub": { "value": "14px", "rem": "0.875rem", "evidence": "frontend/src/components/chat/ChatDrawer.tsx:276" },
+      "md": { "value": "16px", "rem": "1rem", "evidence": "frontend/src/components/common/SearchBar.tsx:81" },
+      "lgSub": { "value": "20px", "rem": "1.25rem", "evidence": "frontend/src/components/media/SpoilerLockController.tsx:49" },
+      "lg": { "value": "24px", "rem": "1.5rem", "evidence": "frontend/src/components/ui/card.tsx:25" },
+      "xl": { "value": "32px", "rem": "2rem", "evidence": "frontend/src/components/landing/FeaturedHeroBanner.tsx:102" },
+      "2xl": { "value": "48px", "rem": "3rem", "evidence": "frontend/src/components/common/Footer.tsx:6" },
+      "3xl": { "value": "64px", "rem": "4rem", "evidence": "frontend/src/components/landing/FeaturedHeroBanner.tsx:121" },
+      "4xl": { "value": "112px-160px", "rem": "7rem-10rem", "evidence": "frontend/src/components/landing/HeroSection.tsx:29" }
+    },
+    "radius": {
+      "xs": { "value": "4px", "evidence": "frontend/src/index.css:87" },
+      "sm": { "value": "8px", "formula": "calc(var(--radius) - 4px)", "evidence": "frontend/tailwind.config.js:72" },
+      "md": { "value": "10px", "formula": "calc(var(--radius) - 2px)", "evidence": "frontend/src/components/ui/button.tsx:24" },
+      "lg": { "value": "12px", "formula": "var(--radius)", "evidence": "frontend/src/components/ui/button.tsx:7, frontend/src/index.css:35" },
+      "xl": { "value": "14px-16px", "evidence": "frontend/src/components/ui/card.tsx:11, frontend/src/components/landing/FeaturedHeroBanner.tsx:152" },
+      "2xl": { "value": "20px", "evidence": "frontend/src/components/media/MediaCard.tsx:26, frontend/src/components/media/SpoilerLockController.tsx:49" },
+      "3xl": { "value": "24px", "evidence": "frontend/src/components/landing/FeaturedHeroBanner.tsx:104, frontend/src/components/common/Navbar.tsx:115" },
+      "full": { "value": "9999px", "evidence": "frontend/src/components/ui/badge.tsx:6, frontend/src/components/common/SearchBar.tsx:81" }
+    },
+    "shadow": {
+      "sm": { "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)", "evidence": "frontend/src/components/ui/button.tsx:13" },
+      "md": { "value": "0 4px 6px -1px rgb(0 0 0 / 0.1)", "evidence": "frontend/src/components/ui/card.tsx:11" },
+      "lg": { "value": "0 10px 15px -3px rgb(0 0 0 / 0.1)", "evidence": "frontend/src/components/landing/FeaturedHeroBanner.tsx:152" },
+      "xl": { "value": "0 20px 25px -5px rgb(0 0 0 / 0.1)", "evidence": "frontend/src/components/media/MediaCard.tsx:26" },
+      "2xl": { "value": "0 25px 50px -12px rgb(0 0 0 / 0.25)", "evidence": "frontend/src/components/common/Navbar.tsx:66" },
+      "glowPurple": { "value": "0 0 20px rgba(157, 78, 221, 0.4)", "evidence": "frontend/src/index.css:68" },
+      "glowPurpleIntense": { "value": "0 0 25px rgba(157, 78, 221, 0.5)", "evidence": "frontend/src/components/chat/ChatDrawer.tsx:158" },
+      "glowOrange": { "value": "0 0 20px rgba(255, 85, 0, 0.4)", "evidence": "frontend/src/index.css:72" },
+      "actionOrange": { "value": "0 10px 15px -3px rgba(255, 85, 0, 0.3)", "evidence": "frontend/src/components/landing/FeaturedHeroBanner.tsx:152" }
+    },
+    "breakpoint": {
+      "sm": { "value": "640px", "evidence": "frontend/src/components/common/Footer.tsx:7" },
+      "md": { "value": "768px", "evidence": "frontend/src/components/common/Navbar.tsx:78" },
+      "lg": { "value": "1024px", "evidence": "frontend/src/components/media/SpoilerLockController.tsx:50" },
+      "xl": { "value": "1280px", "evidence": "tailwindcss default" },
+      "2xl": { "value": "1400px", "evidence": "frontend/tailwind.config.js:13" }
+    }
+  }
+}
