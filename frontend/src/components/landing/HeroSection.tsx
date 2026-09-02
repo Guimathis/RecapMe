@@ -51,59 +51,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         Consulte resumos estruturados por temporada e episódio, e converse com a IA com uma trava inteligente que impede spoilers do futuro da trama.
       </p>
 
-      {/* Filtros Pílulas */}
-      <div
-        className={cn(
-          "flex flex-wrap justify-center gap-2 md:gap-3 mb-10 transition-all duration-500 delay-200",
-          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-        )}
-      >
-        <button
-          onClick={() => handleFilterClick('ALL')}
-          className={cn(
-            "px-5 py-2.5 rounded-full font-medium text-sm transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background active:scale-95",
-            selectedFilter === 'ALL'
-              ? "bg-brand-purple text-white glow-active scale-105"
-              : "bg-brand-card border border-brand-border text-gray-300 hover:text-white hover:bg-white/5"
-          )}
-        >
-          Todos
-        </button>
-        <button
-          onClick={() => handleFilterClick('SERIES')}
-          className={cn(
-            "px-5 py-2.5 rounded-full font-medium text-sm transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background active:scale-95",
-            selectedFilter === 'SERIES'
-              ? "bg-brand-purple text-white glow-active scale-105"
-              : "bg-brand-card border border-brand-border text-gray-300 hover:text-white hover:bg-white/5"
-          )}
-        >
-          Séries
-        </button>
-        <button
-          onClick={() => handleFilterClick('ANIME')}
-          className={cn(
-            "px-5 py-2.5 rounded-full font-medium text-sm transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background active:scale-95",
-            selectedFilter === 'ANIME'
-              ? "bg-brand-purple text-white glow-active scale-105"
-              : "bg-brand-card border border-brand-border text-gray-300 hover:text-white hover:bg-white/5"
-          )}
-        >
-          Animes
-        </button>
-        <button
-          onClick={() => handleFilterClick('MOVIE')}
-          className={cn(
-            "px-5 py-2.5 rounded-full font-medium text-sm transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background active:scale-95",
-            selectedFilter === 'MOVIE'
-              ? "bg-brand-purple text-white glow-active scale-105"
-              : "bg-brand-card border border-brand-border text-gray-300 hover:text-white hover:bg-white/5"
-          )}
-        >
-          Filmes
-        </button>
-      </div>
-
       {/* Barra de Busca */}
       <div
         className={cn(
@@ -113,6 +60,58 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       >
         <SearchBar />
       </div>
+        {/* Filtros Pílulas */}
+        <div
+            className={cn(
+                "flex flex-wrap justify-center gap-2 md:gap-3 mt-10 transition-all duration-500 delay-200",
+                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+            )}
+        >
+            <button
+                onClick={() => handleFilterClick('ALL')}
+                className={cn(
+                    "px-5 py-2.5 rounded-full font-medium text-sm transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background active:scale-95",
+                    selectedFilter === 'ALL'
+                        ? "bg-brand-purple text-white glow-active scale-105"
+                        : "bg-brand-card border border-brand-border text-gray-300 hover:text-white hover:bg-white/5"
+                )}
+            >
+                Todos
+            </button>
+            <button
+                onClick={() => handleFilterClick('SERIES')}
+                className={cn(
+                    "px-5 py-2.5 rounded-full font-medium text-sm transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background active:scale-95",
+                    selectedFilter === 'SERIES'
+                        ? "bg-brand-purple text-white glow-active scale-105"
+                        : "bg-brand-card border border-brand-border text-gray-300 hover:text-white hover:bg-white/5"
+                )}
+            >
+                Séries
+            </button>
+            <button
+                onClick={() => handleFilterClick('ANIME')}
+                className={cn(
+                    "px-5 py-2.5 rounded-full font-medium text-sm transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background active:scale-95",
+                    selectedFilter === 'ANIME'
+                        ? "bg-brand-purple text-white glow-active scale-105"
+                        : "bg-brand-card border border-brand-border text-gray-300 hover:text-white hover:bg-white/5"
+                )}
+            >
+                Animes
+            </button>
+            <button
+                onClick={() => handleFilterClick('MOVIE')}
+                className={cn(
+                    "px-5 py-2.5 rounded-full font-medium text-sm transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background active:scale-95",
+                    selectedFilter === 'MOVIE'
+                        ? "bg-brand-purple text-white glow-active scale-105"
+                        : "bg-brand-card border border-brand-border text-gray-300 hover:text-white hover:bg-white/5"
+                )}
+            >
+                Filmes
+            </button>
+        </div>
     </section>
   );
 };
