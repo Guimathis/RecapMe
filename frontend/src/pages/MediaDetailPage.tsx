@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-import { ArrowLeft, Film, Loader2, Calendar, Layers, Star, Clock, Tv, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Film, Loader2, Calendar, Layers, Star, Clock, Tv, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
 import { mediaService } from '@/services/mediaService';
 import { recapService } from '@/services/recapService';
 import { MediaDetail, MediaType } from '@/types/media';
@@ -11,6 +11,7 @@ import { useChatStore } from '@/stores/useChatStore';
 import { SpoilerLockController } from '@/components/media/SpoilerLockController';
 import { SeasonRecapTab } from '@/components/recap/SeasonRecapTab';
 import { EpisodeAccordionList } from '@/components/recap/EpisodeAccordionList';
+import { MediaEpisodesTab } from '@/components/media/MediaEpisodesTab';
 import { ChatDrawer } from '@/components/chat/ChatDrawer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -194,7 +195,7 @@ export const MediaDetailPage: React.FC = () => {
   return (
     <div className="pb-28">
       {/* Banner Superior Panorâmico (Estilo AniList) */}
-      <div className="relative w-full h-[260px] sm:h-[320px] md:h-[380px] lg:h-[420px] bg-brand-card overflow-hidden">
+      <div className="relative w-full h-[260px] sm:h-[320px] md:h-[380px] bg-brand-card overflow-hidden">
         {media.backdropUrl ? (
           <img
             src={media.backdropUrl}
@@ -394,59 +395,94 @@ export const MediaDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Conteúdo Principal e Abas de Resumo */}
+      {/* Conteúdo Principal: Abas de Resumos e Episódios */}
       <main className="container max-w-7xl mx-auto px-4 sm:px-6 mt-8 space-y-8">
-        {/* Controle da Trava Anti-Spoiler */}
-        <SpoilerLockController
-          mediaKey={mediaKey}
-          totalSeasons={media.totalSeasons || 1}
-          episodesInCurrentSeason={episodesCount}
-          currentSeason={selectedSeason}
-          onSeasonChange={(s) => setSelectedSeason(s)}
-        />
-
-        {/* Seletor de Temporadas (Tabs) & Conteúdo */}
-        {loadingRecap ? (
-          <div className="p-16 text-center flex flex-col items-center justify-center space-y-3 bg-brand-card rounded-2xl border border-brand-border">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-purple" />
-            <span className="text-sm text-gray-400 font-light">Sintetizando resumo inteligente da temporada...</span>
+        <Tabs defaultValue="resumos" className="w-full space-y-8">
+          {/* Navegação Principal das Abas da Obra */}
+          <div className="pb-3">
+            <TabsList className="bg-brand-card/90 backdrop-blur-md border border-brand-border p-1.5 rounded-2xl h-auto gap-2">
+              <TabsTrigger
+                value="resumos"
+                className="text-sm sm:text-base font-semibold px-6 py-2.5 rounded-xl transition-all data-[state=active]:bg-brand-purple data-[state=active]:text-white data-[state=active]:shadow-lg cursor-pointer flex items-center gap-2.5"
+              >
+                <BookOpen className="h-4 w-4" />
+                Resumos
+              </TabsTrigger>
+              <TabsTrigger
+                value="episodios"
+                className="text-sm sm:text-base font-semibold px-6 py-2.5 rounded-xl transition-all data-[state=active]:bg-brand-purple data-[state=active]:text-white data-[state=active]:shadow-lg cursor-pointer flex items-center gap-2.5"
+              >
+                <Tv className="h-4 w-4" />
+                Episódios
+              </TabsTrigger>
+            </TabsList>
           </div>
-        ) : recap ? (
-          <Tabs defaultValue="overview" className="w-full space-y-6">
-            <div className="flex items-center justify-between border-b border-brand-border/60 pb-4">
-              <TabsList className="bg-brand-card border border-brand-border p-1 rounded-full">
-                <TabsTrigger
-                  value="overview"
-                  className="text-xs sm:text-sm gap-2 rounded-full px-5 py-2 data-[state=active]:bg-brand-purple data-[state=active]:text-white font-medium"
-                >
-                  Resumo Geral
-                </TabsTrigger>
-                <TabsTrigger
-                  value="episodes"
-                  className="text-xs sm:text-sm gap-2 rounded-full px-5 py-2 data-[state=active]:bg-brand-purple data-[state=active]:text-white font-medium"
-                >
-                  <Layers className="h-4 w-4" /> Lista de Episódios
-                </TabsTrigger>
-              </TabsList>
-            </div>
 
-            <TabsContent value="overview">
-              <SeasonRecapTab recap={recap} />
-            </TabsContent>
+          {/* Aba 1: Resumos (conteúdo atual preservado integralmente) */}
+          <TabsContent value="resumos" className="space-y-8 mt-0 focus-visible:outline-none">
+            {/* Controle da Trava Anti-Spoiler */}
+            <SpoilerLockController
+              mediaKey={mediaKey}
+              totalSeasons={media.totalSeasons || 1}
+              episodesInCurrentSeason={episodesCount}
+              currentSeason={selectedSeason}
+              onSeasonChange={(s) => setSelectedSeason(s)}
+            />
 
-            <TabsContent value="episodes">
-              <EpisodeAccordionList
-                mediaKey={mediaKey}
-                seasonNumber={selectedSeason}
-                episodes={recap.episodes || []}
-              />
-            </TabsContent>
-          </Tabs>
-        ) : (
-          <div className="p-12 text-center rounded-2xl bg-brand-card border border-brand-border text-sm text-gray-400">
-            Nenhum resumo encontrado para esta temporada.
-          </div>
-        )}
+            {/* Seletor de Temporadas (Tabs) & Conteúdo */}
+            {loadingRecap ? (
+              <div className="p-16 text-center flex flex-col items-center justify-center space-y-3 bg-brand-card rounded-2xl border border-brand-border">
+                <Loader2 className="h-8 w-8 animate-spin text-brand-purple" />
+                <span className="text-sm text-gray-400 font-light">Sintetizando resumo inteligente da temporada...</span>
+              </div>
+            ) : recap ? (
+              <Tabs defaultValue="overview" className="w-full space-y-6">
+                <div className="flex items-center justify-between border-b border-brand-border/60 pb-4">
+                  <TabsList className="bg-brand-card border border-brand-border p-1 rounded-full">
+                    <TabsTrigger
+                      value="overview"
+                      className="text-xs sm:text-sm gap-2 rounded-full px-5 py-2 data-[state=active]:bg-brand-purple data-[state=active]:text-white font-medium"
+                    >
+                      Resumo Geral
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="episodes"
+                      className="text-xs sm:text-sm gap-2 rounded-full px-5 py-2 data-[state=active]:bg-brand-purple data-[state=active]:text-white font-medium"
+                    >
+                      <Layers className="h-4 w-4" /> Lista de Episódios
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+
+                <TabsContent value="overview">
+                  <SeasonRecapTab recap={recap} />
+                </TabsContent>
+
+                <TabsContent value="episodes">
+                  <EpisodeAccordionList
+                    mediaKey={mediaKey}
+                    seasonNumber={selectedSeason}
+                    episodes={recap.episodes || []}
+                  />
+                </TabsContent>
+              </Tabs>
+            ) : (
+              <div className="p-12 text-center rounded-2xl bg-brand-card border border-brand-border text-sm text-gray-400">
+                Nenhum resumo encontrado para esta temporada.
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Aba 2: Episódios (número, thumb e título) */}
+          <TabsContent value="episodios" className="space-y-6 mt-0 focus-visible:outline-none">
+            <MediaEpisodesTab
+              media={media}
+              selectedSeason={selectedSeason}
+              onSeasonChange={(s) => setSelectedSeason(s)}
+              recapEpisodes={recap?.episodes}
+            />
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Drawer de Chat Conversacional com IA */}

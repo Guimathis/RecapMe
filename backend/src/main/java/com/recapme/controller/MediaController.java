@@ -28,6 +28,7 @@ public class MediaController {
 
     private final MediaService mediaService;
 
+
     @Operation(
             summary = "Obter seções de destaque para a Home",
             description = "Recupera as 4 seções principais de exibição da Home (Banner Hero, Trending Now, Popular e Top Rated de todos os tempos), sincronizando metadados com o banco de dados local com suporte a cache Caffeine."

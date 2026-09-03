@@ -3,12 +3,8 @@ package com.recapme.service;
 import com.recapme.client.anilist.AniListClient;
 import com.recapme.client.anilist.AniListDto;
 import com.recapme.common.exception.ResourceNotFoundException;
-import com.recapme.dto.response.HomeSectionsResponseDto;
-import com.recapme.dto.response.ListAllMediasResponseDto;
-import com.recapme.dto.response.ListAllSeasonsResponseDto;
-import com.recapme.dto.response.MediaSummaryDto;
-import com.recapme.dto.response.OneMediaResponseDto;
-import com.recapme.dto.response.SeasonSummaryDto;
+import com.recapme.dto.response.*;
+import com.recapme.model.Episode;
 import com.recapme.model.Media;
 import com.recapme.model.Season;
 import com.recapme.repository.MediaRepository;
@@ -220,11 +216,25 @@ public class MediaService {
     }
 
     private SeasonSummaryDto toSeasonSummaryDto(Season s) {
+        List<EpisodeSummaryDto> episodeSummaries = s.getEpisodes().stream().map(this::toEpisodeSummaryDto)
+                .collect(Collectors.toList());
         return SeasonSummaryDto.builder()
                 .id(s.getId())
                 .seasonNumber(s.getSeasonNumber())
                 .title(s.getTitle())
                 .episodeCount(s.getEpisodeCount())
+                .episodes(episodeSummaries)
+                .build();
+    }
+
+    private EpisodeSummaryDto toEpisodeSummaryDto(Episode ep) {
+        return EpisodeSummaryDto.builder()
+                .id(ep.getId())
+                .episodeNumber(ep.getEpisodeNumber())
+                .title(ep.getTitle())
+                .thumbnailUrl(ep.getThumbnailUrl())
+                .synopsis(ep.getSynopsis())
+                .durationMinutes(ep.getDurationMinutes())
                 .build();
     }
 

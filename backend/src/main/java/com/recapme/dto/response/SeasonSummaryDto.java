@@ -1,10 +1,12 @@
 package com.recapme.dto.response;
 
+import com.recapme.model.Episode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.List;
 import java.util.UUID;
 
 @Builder
@@ -20,7 +22,10 @@ public record SeasonSummaryDto(
         String title,
 
         @Schema(description = "Quantidade de episódios da temporada", example = "25")
-        Integer episodeCount
+        Integer episodeCount,
+
+        @Schema(description = "Lista de episódios da temporada")
+        List<EpisodeSummaryDto> episodes
 ) implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

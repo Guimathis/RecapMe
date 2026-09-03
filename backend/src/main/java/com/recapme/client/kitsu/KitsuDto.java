@@ -91,6 +91,7 @@ public class KitsuDto {
         private Integer number;
         private EpisodeTitles titles;
         private EpisodeThumbnail thumbnail;
+        private String description;
         private Integer length;
     }
 
