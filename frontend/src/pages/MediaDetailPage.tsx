@@ -125,10 +125,19 @@ export const MediaDetailPage: React.FC = () => {
   // 2. Carregar Resumo da Temporada Selecionada
   useEffect(() => {
     const fetchRecap = async () => {
-      if (!externalId) return;
+      // Aguarda o término do carregamento da mídia e disponibilidade do ID real
+      if (loadingMedia || !media?.id) return;
+
+      const currentSeasonObj = media.seasons?.find((s) => s.seasonNumber === selectedSeason);
+      const seasonId = currentSeasonObj?.id;
+
       setLoadingRecap(true);
       try {
-        const recapData = await recapService.getSeasonRecap(mediaType, externalId, selectedSeason);
+        const recapData = await recapService.getSeasonRecap({
+          mediaId: media.id,
+          seasonId,
+          seasonNumber: selectedSeason,
+        });
         setRecap(recapData);
       } catch (err: any) {
         console.warn('Erro ao carregar resumo da temporada:', err);
@@ -137,7 +146,7 @@ export const MediaDetailPage: React.FC = () => {
       }
     };
     fetchRecap();
-  }, [mediaType, externalId, selectedSeason]);
+  }, [loadingMedia, media?.id, selectedSeason, media?.seasons]);
 
   // 3. Controle de expansão da sinopse
   useEffect(() => {
@@ -180,7 +189,8 @@ export const MediaDetailPage: React.FC = () => {
     );
   }
 
-  const episodesCount = recap?.episodes?.length || media.totalEpisodes || 12;
+  const currentSeasonObj = media.seasons?.find((s) => s.seasonNumber === selectedSeason);
+  const episodesCount = currentSeasonObj?.episodes?.length || currentSeasonObj?.episodeCount || recap?.episodes?.length || media.totalEpisodes || 12;
   const statusInfo = formatStatus(media.status);
   const seasonLabel = formatSeason(media.seasonPeriod, media.releaseYear);
   const hasExtraInfo = Boolean(
@@ -462,7 +472,16 @@ export const MediaDetailPage: React.FC = () => {
                   <EpisodeAccordionList
                     mediaKey={mediaKey}
                     seasonNumber={selectedSeason}
-                    episodes={recap.episodes || []}
+                    episodes={
+                      (currentSeasonObj?.episodes && currentSeasonObj.episodes.length > 0)
+                        ? currentSeasonObj.episodes.map((ep) => ({
+                            episodeNumber: ep.episodeNumber,
+                            title: ep.title || `Episódio ${ep.episodeNumber}`,
+                            summary: ep.synopsis || 'Sem sinopse disponível.',
+                            keyEvents: [],
+                          }))
+                        : (recap.episodes || [])
+                    }
                   />
                 </TabsContent>
               </Tabs>

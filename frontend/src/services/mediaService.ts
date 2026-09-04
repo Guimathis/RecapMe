@@ -106,7 +106,7 @@ export const mediaService = {
   getDetails: async (type: MediaType, externalId: string): Promise<MediaDetail> => {
     let data: any;
     try {
-      data = await apiFetch<any>(`/api/v1/medias/${externalId}`);
+      data = await apiFetch<any>(`/v1/medias/${externalId}`);
     } catch {
       try {
         data = await apiFetch<any>(`/v1/medias/${externalId}`);
