@@ -108,7 +108,11 @@ export const mediaService = {
     try {
       data = await apiFetch<any>(`/v1/medias/${externalId}`);
     } catch {
-      data = await apiFetch<any>(`/v1/medias/${type}/${externalId}`);
+      try {
+        data = await apiFetch<any>(`/v1/medias/${externalId}`);
+      } catch {
+        data = await apiFetch<any>(`/v1/medias/${type}/${externalId}`);
+      }
     }
     const normalized = normalizeMediaItem(data);
     return {
@@ -116,6 +120,7 @@ export const mediaService = {
       availableSeasons:
         data?.availableSeasons ||
         (data?.seasons ? data.seasons.map((s: any) => s.seasonNumber || s) : [1]),
+      seasons: data?.seasons || [],
     };
   },
 

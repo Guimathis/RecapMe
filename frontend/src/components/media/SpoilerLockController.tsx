@@ -81,7 +81,6 @@ export const SpoilerLockController: React.FC<SpoilerLockControllerProps> = ({
         {/* Seletores de Temporada e Episódio */}
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
           <div className="flex items-center gap-2 bg-brand-inset border border-brand-border rounded-xl px-3.5 py-2 shadow-sm">
-            <span className="text-xs text-gray-400 font-medium">Temporada:</span>
             <select
               value={currentProgress.season}
               onChange={handleSeasonSelect}
@@ -96,7 +95,6 @@ export const SpoilerLockController: React.FC<SpoilerLockControllerProps> = ({
           </div>
 
           <div className="flex items-center gap-2 bg-brand-inset border border-brand-border rounded-xl px-3.5 py-2 shadow-sm">
-            <span className="text-xs text-gray-400 font-medium">Episódio:</span>
             <select
               value={currentProgress.episode}
               onChange={handleEpisodeSelect}

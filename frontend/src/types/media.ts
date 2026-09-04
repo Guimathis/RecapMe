@@ -20,9 +20,27 @@ export interface MediaItem {
   genres?: string[];
 }
 
+export interface EpisodeItemSummary {
+  id?: string;
+  episodeNumber: number;
+  title?: string;
+  thumbnailUrl?: string;
+  synopsis?: string;
+  durationMinutes?: number;
+}
+
+export interface SeasonItemSummary {
+  id?: string;
+  seasonNumber: number;
+  title?: string;
+  episodeCount?: number;
+  episodes?: EpisodeItemSummary[];
+}
+
 export interface MediaDetail extends MediaItem {
   id?: string;
   availableSeasons: number[];
+  seasons?: SeasonItemSummary[];
 }
 
 export interface SearchMediaResponse {

@@ -95,12 +95,14 @@ export const ChatDrawer: React.FC<ChatDrawerProps> = ({
 
     await chatService.streamMessage({
       request: {
-        externalId,
-        mediaType,
-        title: mediaTitle,
-        message: question,
+        mediaId: externalId,
+        userMessage: question,
+        upToSeasonNumber: progress.unlockedAll ? 99 : progress.season,
+        upToEpisodeNumber: progress.unlockedAll ? 999 : progress.episode,
         seasonCutoff: progress.unlockedAll ? 99 : progress.season,
         episodeCutoff: progress.unlockedAll ? 999 : progress.episode,
+        mediaType,
+        title: mediaTitle,
         history: historyForBackend,
       },
       onChunk: (chunk) => {

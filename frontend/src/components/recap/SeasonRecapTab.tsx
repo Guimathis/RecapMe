@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
 import { CheckCircle, BookOpen } from 'lucide-react';
 import { SeasonRecap } from '@/types/recap';
 
@@ -7,6 +8,8 @@ interface SeasonRecapTabProps {
 }
 
 export const SeasonRecapTab: React.FC<SeasonRecapTabProps> = ({ recap }) => {
+  const recapText = recap.content || recap.seasonSummary || '';
+
   return (
     <div className="space-y-6">
       {/* Resumo Geral da Temporada */}
@@ -17,9 +20,9 @@ export const SeasonRecapTab: React.FC<SeasonRecapTabProps> = ({ recap }) => {
             Visão Geral — Temporada {recap.seasonNumber}
           </h3>
         </div>
-        <p className="text-sm sm:text-base text-gray-300 leading-relaxed whitespace-pre-line font-light">
-          {recap.seasonSummary}
-        </p>
+        <div className="text-sm sm:text-base text-gray-300 leading-relaxed font-light prose prose-invert max-w-none prose-p:leading-relaxed prose-headings:text-white prose-strong:text-white prose-ul:my-2">
+          <ReactMarkdown>{recapText}</ReactMarkdown>
+        </div>
       </div>
 
       {/* Pontos-Chave / Principais Revelações (Key Takeaways) */}

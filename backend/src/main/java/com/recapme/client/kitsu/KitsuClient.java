@@ -54,10 +54,12 @@ public class KitsuClient {
               nodes {
                 number
                 titles {
+                  canonical
                   romanized
                   original
                   translated
                 }
+                description(locales: ["en"])
                 thumbnail {
                   original {
                     url
