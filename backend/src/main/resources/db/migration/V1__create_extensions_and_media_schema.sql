@@ -98,3 +98,6 @@ CREATE TABLE feedbacks
 CREATE INDEX IF NOT EXISTS idx_medias_title_unaccent ON medias USING gin(
     to_tsvector('simple', immutable_unaccent(coalesce(title_romaji, '') || ' ' || coalesce(title_english, '') || ' ' || coalesce(title_portuguese, '')))
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_recaps_media_season_episode
+    ON recaps (media_id, season_id, episode_id) NULLS NOT DISTINCT;

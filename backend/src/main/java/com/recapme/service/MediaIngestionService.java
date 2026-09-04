@@ -233,6 +233,8 @@ public class MediaIngestionService {
                         ? (node.getLength() > 100 ? node.getLength() / 60 : node.getLength())
                         : duration;
 
+                String epSynopsis = (node.getDescription() != null) ? node.getDescription().getEn() : null;
+
                 Episode episode = Episode.builder()
                         .season(season)
                         .episodeNumber(node.getNumber())
@@ -240,6 +242,7 @@ public class MediaIngestionService {
                         .thumbnailUrl(thumbnailUrl)
                         .durationMinutes(epDuration)
                         .createdAt(now)
+                        .synopsis(epSynopsis)
                         .build();
 
                 episodesToSave.add(episode);

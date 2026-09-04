@@ -94,7 +94,7 @@ class RecapServiceTest {
     @DisplayName("getRecap deve retornar OneRecapResponseDto quando recap existir")
     void shouldGetRecapSuccessfully() {
         when(mediaRepository.existsById(sampleMedia.getId())).thenReturn(true);
-        when(recapRepository.findByMediaIdAndSeasonIdAndEpisodeId(sampleMedia.getId(), sampleSeason.getId(), sampleEpisode.getId()))
+        when(recapRepository.findFirstByMediaIdAndSeasonIdAndEpisodeIdOrderByCreatedAtDesc(sampleMedia.getId(), sampleSeason.getId(), sampleEpisode.getId()))
                 .thenReturn(Optional.of(sampleRecap));
 
         OneRecapResponseDto result = recapService.getRecap(sampleMedia.getId(), sampleSeason.getId(), sampleEpisode.getId());
@@ -108,7 +108,7 @@ class RecapServiceTest {
     @DisplayName("getRecap deve lançar ResourceNotFoundException quando recap não existir")
     void shouldThrowWhenRecapNotFound() {
         when(mediaRepository.existsById(sampleMedia.getId())).thenReturn(true);
-        when(recapRepository.findByMediaIdAndSeasonIdAndEpisodeId(sampleMedia.getId(), sampleSeason.getId(), sampleEpisode.getId()))
+        when(recapRepository.findFirstByMediaIdAndSeasonIdAndEpisodeIdOrderByCreatedAtDesc(sampleMedia.getId(), sampleSeason.getId(), sampleEpisode.getId()))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> recapService.getRecap(sampleMedia.getId(), sampleSeason.getId(), sampleEpisode.getId()))
@@ -129,7 +129,7 @@ class RecapServiceTest {
         when(mediaRepository.findById(sampleMedia.getId())).thenReturn(Optional.of(sampleMedia));
         when(seasonRepository.findById(sampleSeason.getId())).thenReturn(Optional.of(sampleSeason));
         when(episodeRepository.findById(sampleEpisode.getId())).thenReturn(Optional.of(sampleEpisode));
-        when(recapRepository.findByMediaIdAndSeasonIdAndEpisodeId(sampleMedia.getId(), sampleSeason.getId(), sampleEpisode.getId()))
+        when(recapRepository.findFirstByMediaIdAndSeasonIdAndEpisodeIdOrderByCreatedAtDesc(sampleMedia.getId(), sampleSeason.getId(), sampleEpisode.getId()))
                 .thenReturn(Optional.empty());
         when(recapAiService.generateRecap(sampleMedia, sampleSeason, sampleEpisode, "EPISODE", "S1E1"))
                 .thenReturn("### Novo Resumo Gerado");

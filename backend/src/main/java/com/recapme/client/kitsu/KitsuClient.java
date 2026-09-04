@@ -26,10 +26,12 @@ public class KitsuClient {
                 nodes {
                   number
                   titles {
+                    canonical
                     romanized
                     original
                     translated
                   }
+                  description(locales: ["en"])
                   thumbnail {
                     original {
                       url
@@ -133,20 +135,14 @@ public class KitsuClient {
      * Matches title + season + startDate.year, checking both english and romaji titles.
      */
     public Optional<KitsuDto.AnimeNode> getKitsuEpisodes(String englishTitle, String romajiTitle, String season, Integer startDateYear) {
-        KitsuDto.AnimeNode englishMatch = findKitsuMatch(englishTitle, season, startDateYear);
+//        KitsuDto.AnimeNode englishMatch = findKitsuMatch(englishTitle, season, startDateYear);
         KitsuDto.AnimeNode romajiMatch = findKitsuMatch(romajiTitle, season, startDateYear);
 
-        int englishCount = (englishMatch != null && englishMatch.getEpisodes() != null && englishMatch.getEpisodes().getNodes() != null)
-                ? englishMatch.getEpisodes().getNodes().size() : 0;
         int romajiCount = (romajiMatch != null && romajiMatch.getEpisodes() != null && romajiMatch.getEpisodes().getNodes() != null)
                 ? romajiMatch.getEpisodes().getNodes().size() : 0;
 
-        if (englishCount > 0 && englishCount >= romajiCount) {
-            return Optional.of(englishMatch);
-        } else if (romajiCount > 0) {
+        if (romajiCount > 0) {
             return Optional.of(romajiMatch);
-        } else if (englishMatch != null) {
-            return Optional.of(englishMatch);
         } else if (romajiMatch != null) {
             return Optional.of(romajiMatch);
         }

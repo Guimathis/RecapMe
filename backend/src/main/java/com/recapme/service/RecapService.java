@@ -39,14 +39,7 @@ public class RecapService {
             throw new ResourceNotFoundException("Media with identifier '" + mediaId + "' was not found");
         }
 
-        Optional<Recap> recapOpt;
-        if (episodeId != null) {
-            recapOpt = recapRepository.findByMediaIdAndSeasonIdAndEpisodeId(mediaId, seasonId, episodeId);
-        } else if (seasonId != null) {
-            recapOpt = recapRepository.findByMediaIdAndSeasonIdAndEpisodeIdIsNull(mediaId, seasonId);
-        } else {
-            recapOpt = recapRepository.findByMediaIdAndSeasonIdIsNullAndEpisodeIdIsNull(mediaId);
-        }
+        Optional<Recap> recapOpt = findExistingRecap(mediaId, seasonId, episodeId);
 
         Recap recap = recapOpt.orElseThrow(() -> new ResourceNotFoundException(
                 "Recap was not found for mediaId=" + mediaId +
@@ -74,41 +67,68 @@ public class RecapService {
                     .orElseThrow(() -> new ResourceNotFoundException("Episode with identifier '" + request.episodeId() + "' was not found"));
         }
 
-        // Check if recap already exists
-        Optional<Recap> existing;
-        if (episode != null) {
-            existing = recapRepository.findByMediaIdAndSeasonIdAndEpisodeId(media.getId(), season != null ? season.getId() : null, episode.getId());
-        } else if (season != null) {
-            existing = recapRepository.findByMediaIdAndSeasonIdAndEpisodeIdIsNull(media.getId(), season.getId());
-        } else {
-            existing = recapRepository.findByMediaIdAndSeasonIdIsNullAndEpisodeIdIsNull(media.getId());
-        }
+        UUID mediaId = media.getId();
+        UUID seasonId = season != null ? season.getId() : null;
+        UUID episodeId = episode != null ? episode.getId() : null;
 
+        // Check if recap already exists
+        Optional<Recap> existing = findExistingRecap(mediaId, seasonId, episodeId);
         if (existing.isPresent()) {
             return toSaveRecapResponseDto(existing.get());
         }
 
-        // Generate content with AI
-        String content = recapAiService.generateRecap(
-                media,
-                season,
-                episode,
-                request.targetType(),
-                request.spoilerLevel()
-        );
+        // JVM lock based on entity identifiers to serialize concurrent synthesis for the exact same scope
+        String lockKey = (mediaId + ":" + (seasonId != null ? seasonId : "null") + ":" + (episodeId != null ? episodeId : "null")).intern();
+        synchronized (lockKey) {
+            existing = findExistingRecap(mediaId, seasonId, episodeId);
+            if (existing.isPresent()) {
+                return toSaveRecapResponseDto(existing.get());
+            }
 
-        Recap recap = Recap.builder()
-                .media(media)
-                .season(season)
-                .episode(episode)
-                .targetType(request.targetType().toUpperCase())
-                .spoilerLevel(request.spoilerLevel())
-                .content(content)
-                .createdAt(Instant.now())
-                .build();
+            // Generate content with AI
+            String content = recapAiService.generateRecap(
+                    media,
+                    season,
+                    episode,
+                    request.targetType(),
+                    request.spoilerLevel()
+            );
 
-        Recap saved = recapRepository.save(recap);
-        return toSaveRecapResponseDto(saved);
+            Recap recap = Recap.builder()
+                    .media(media)
+                    .season(season)
+                    .episode(episode)
+                    .targetType(request.targetType().toUpperCase())
+                    .spoilerLevel(request.spoilerLevel())
+                    .content(content)
+                    .createdAt(Instant.now())
+                    .build();
+
+            try {
+                Recap saved = recapRepository.save(recap);
+                return toSaveRecapResponseDto(saved);
+            } catch (Exception e) {
+                // If another concurrent thread committed in the meantime, return the existing record
+                Optional<Recap> foundAfterConflict = findExistingRecap(mediaId, seasonId, episodeId);
+                if (foundAfterConflict.isPresent()) {
+                    return toSaveRecapResponseDto(foundAfterConflict.get());
+                }
+                if (e instanceof RuntimeException re) {
+                    throw re;
+                }
+                throw new RuntimeException("Failed to persist recap: " + e.getMessage(), e);
+            }
+        }
+    }
+
+    private Optional<Recap> findExistingRecap(UUID mediaId, UUID seasonId, UUID episodeId) {
+        if (episodeId != null) {
+            return recapRepository.findFirstByMediaIdAndSeasonIdAndEpisodeIdOrderByCreatedAtDesc(mediaId, seasonId, episodeId);
+        } else if (seasonId != null) {
+            return recapRepository.findFirstByMediaIdAndSeasonIdAndEpisodeIdIsNullOrderByCreatedAtDesc(mediaId, seasonId);
+        } else {
+            return recapRepository.findFirstByMediaIdAndSeasonIdIsNullAndEpisodeIdIsNullOrderByCreatedAtDesc(mediaId);
+        }
     }
 
     @Transactional(readOnly = true)
