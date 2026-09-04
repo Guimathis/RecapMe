@@ -70,7 +70,7 @@ public record MediaSummaryDto(
 
 | Campo no Backend Atual (`MediaSummaryDto`) | Campo Esperado no Contrato (`MediaItem`) | Problema Identificado | Correção Recomendada no Backend |
 | :--- | :--- | :--- | :--- |
-| `anilistId` (Integer) ou `id` (UUID) | `externalId` (String) | Nomes diferentes; falta identificador externo genérico compatível com TMDB e AniList. | Expor campo `externalId` (String) ou adicionar alias `@JsonProperty("externalId")`. |
+| `anilistId` (Integer) ou `id` (UUID) | `mediaId` (String) | Nomes diferentes; falta identificador externo genérico compatível com TMDB e AniList. | Expor campo `mediaId` (String) ou adicionar alias `@JsonProperty("externalId")`. |
 | `format` (String: "TV", "MOVIE", "OVA") | `type` (Enum: `ANIME`, `SERIES`, `MOVIE`) | Formato cru do AniList em vez do tipo semântico da obra. | Expor campo `type` (`ANIME`, `SERIES`, `MOVIE`). |
 | Inexistente | `source` (String: "ANILIST", "TMDB") | O frontend não sabe de qual provedor veio a obra para roteamento de detalhes. | Adicionar campo `source` indicando a fonte dos metadados. |
 | `titlePortuguese` / `titleEnglish` / `titleRomaji` | `title` (String) | Título fragmentado em 3 campos, forçando o frontend a escolher qual exibir. | O backend deve consolidar o título prioritário em `title` (`titlePortuguese` ?? `titleEnglish` ?? `titleRomaji`). |

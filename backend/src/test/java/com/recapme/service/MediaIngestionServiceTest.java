@@ -85,6 +85,7 @@ class MediaIngestionServiceTest {
                                 .number(1)
                                 .titles(KitsuDto.EpisodeTitles.builder().canonical("To You, in 2000 Years").build())
                                 .thumbnail(new KitsuDto.EpisodeThumbnail(new KitsuDto.ThumbnailOriginal("thumb.jpg")))
+                                .description(new KitsuDto.EpisodeDescription("To You, in 2000 Years synopsis"))
                                 .length(24)
                                 .build()
                 )))

@@ -499,7 +499,7 @@ Todos os endpoints operam sob o prefixo `/api/v1`.
 
 #### `POST /api/v1/medias/ingest/{externalId}`
 - **Descrição:** Força a ingestão/re-sincronização de uma obra a partir do ID do AniList.
-- **Path Variable:** `externalId` (INTEGER, ID do AniList)
+- **Path Variable:** `mediaId` (INTEGER, ID do AniList)
 - **Status Sucesso:** `201 Created` / `200 OK`
 - **Response DTO (`OneMediaResponseDto`):** Retorna a entidade salva no banco local.
 

@@ -91,7 +91,17 @@ public class KitsuDto {
         private Integer number;
         private EpisodeTitles titles;
         private EpisodeThumbnail thumbnail;
+        private EpisodeDescription description;
         private Integer length;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class EpisodeDescription {
+        private String en;
     }
 
     @Data

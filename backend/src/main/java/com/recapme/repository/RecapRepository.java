@@ -11,11 +11,23 @@ import java.util.UUID;
 @Repository
 public interface RecapRepository extends JpaRepository<Recap, UUID> {
 
-    Optional<Recap> findByMediaIdAndSeasonIdAndEpisodeId(UUID mediaId, UUID seasonId, UUID episodeId);
+    Optional<Recap> findFirstByMediaIdAndSeasonIdAndEpisodeIdOrderByCreatedAtDesc(UUID mediaId, UUID seasonId, UUID episodeId);
 
-    Optional<Recap> findByMediaIdAndSeasonIdAndEpisodeIdIsNull(UUID mediaId, UUID seasonId);
+    Optional<Recap> findFirstByMediaIdAndSeasonIdAndEpisodeIdIsNullOrderByCreatedAtDesc(UUID mediaId, UUID seasonId);
 
-    Optional<Recap> findByMediaIdAndSeasonIdIsNullAndEpisodeIdIsNull(UUID mediaId);
+    Optional<Recap> findFirstByMediaIdAndSeasonIdIsNullAndEpisodeIdIsNullOrderByCreatedAtDesc(UUID mediaId);
+
+    default Optional<Recap> findByMediaIdAndSeasonIdAndEpisodeId(UUID mediaId, UUID seasonId, UUID episodeId) {
+        return findFirstByMediaIdAndSeasonIdAndEpisodeIdOrderByCreatedAtDesc(mediaId, seasonId, episodeId);
+    }
+
+    default Optional<Recap> findByMediaIdAndSeasonIdAndEpisodeIdIsNull(UUID mediaId, UUID seasonId) {
+        return findFirstByMediaIdAndSeasonIdAndEpisodeIdIsNullOrderByCreatedAtDesc(mediaId, seasonId);
+    }
+
+    default Optional<Recap> findByMediaIdAndSeasonIdIsNullAndEpisodeIdIsNull(UUID mediaId) {
+        return findFirstByMediaIdAndSeasonIdIsNullAndEpisodeIdIsNullOrderByCreatedAtDesc(mediaId);
+    }
 
     List<Recap> findByMediaId(UUID mediaId);
 
