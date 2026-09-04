@@ -1,46 +1,40 @@
 package com.recapme.dto.response;
 
-import com.recapme.model.MediaType;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
-import java.util.List;
+import java.time.Instant;
+import java.util.UUID;
 
-@Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "Recapitulação completa de uma temporada com resumo geral, pontos-chave e breakdown de episódios")
-public class OneRecapResponseDto implements Serializable {
+@Schema(description = "Detalhes do resumo gerado por IA para uma obra, temporada ou episódio")
+public record OneRecapResponseDto(
+        @Schema(description = "Identificador único do resumo", example = "1cc95f64-5717-4562-b3fc-2c963f66af33")
+        UUID id,
 
-    @Schema(description = "Identificador único interno da mídia na base de dados", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
-    private String mediaId;
+        @Schema(description = "Identificador único da obra", example = "7fa85f64-5717-4562-b3fc-2c963f66afa6")
+        UUID mediaId,
 
-    @Schema(description = "Identificador externo da obra", example = "1399")
-    private String externalId;
+        @Schema(description = "Identificador da temporada (se aplicável)", example = "8aa95f64-5717-4562-b3fc-2c963f66af11")
+        UUID seasonId,
 
-    @Schema(description = "Tipo da mídia recapitulada", example = "SERIES")
-    private MediaType mediaType;
+        @Schema(description = "Identificador do episódio (se aplicável)", example = "9bb95f64-5717-4562-b3fc-2c963f66af22")
+        UUID episodeId,
 
-    @Schema(description = "Título da mídia", example = "Game of Thrones")
-    private String mediaTitle;
+        @Schema(description = "Escopo do resumo", example = "EPISODE", allowableValues = {"MEDIA", "SEASON", "EPISODE"})
+        String targetType,
 
-    @Schema(description = "Número da temporada recapitulada", example = "1")
-    private Integer seasonNumber;
+        @Schema(description = "Nível de corte de spoiler aplicado", example = "S1E1")
+        String spoilerLevel,
 
-    @Schema(description = "Título da temporada", example = "Temporada 1")
-    private String seasonTitle;
+        @Schema(description = "Conteúdo narrativo do resumo formatado em Markdown")
+        String content,
 
-    @Schema(description = "Resumo detalhado dos acontecimentos da temporada completa", example = "A primeira temporada foca no conflito político pelo Trono de Ferro após a morte de Jon Arryn...")
-    private String seasonSummary;
-
-    @Schema(description = "Principais conclusões e pontos cruciais a serem lembrados", example = "[\"Ned Stark é executado em Porto Real\", \"Daenerys Targaryen choca três ovos de dragão\"]")
-    private List<String> keyTakeaways;
-
-    @Schema(description = "Lista detalhada com resumos individuais de cada episódio da temporada")
-    private List<EpisodeItemDto> episodes;
+        @Schema(description = "Data e hora de geração")
+        Instant createdAt
+) implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
 }

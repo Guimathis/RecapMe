@@ -1,79 +1,88 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Sparkles, Film } from 'lucide-react';
+import { Film, Bookmark } from 'lucide-react';
 import { MediaItem } from '@/types/media';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface MediaCardProps {
   media: MediaItem;
+  className?: string;
 }
 
-export const MediaCard: React.FC<MediaCardProps> = ({ media }) => {
+export const MediaCard: React.FC<MediaCardProps> = ({ media, className }) => {
+  const [bookmarked, setBookmarked] = useState(false);
+
+  const toggleBookmark = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBookmarked(!bookmarked);
+  };
+
   return (
     <Link
-      to={`/media/${media.type}/${media.externalId}`}
-      className="group flex flex-col rounded-2xl overflow-hidden glass-card hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-1.5 shadow-lg hover:shadow-purple-500/15"
+      to={`/media/${media.type || 'ANIME'}/${media.externalId || media.id || ''}`}
+      className={cn(
+        "group flex flex-col aspect-[2/3] rounded-2xl overflow-hidden bg-brand-card border border-brand-border transition-all duration-300 hover:scale-105 hover:z-20 shadow-xl relative cursor-pointer transform-gpu",
+        className
+      )}
     >
       {/* Poster Image Container */}
-      <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted/40">
+      <div className="relative w-full h-full overflow-hidden bg-brand-inset">
         {media.posterUrl ? (
           <img
             src={media.posterUrl}
             alt={media.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             loading="lazy"
             onError={(e) => {
               (e.target as HTMLElement).style.display = 'none';
             }}
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground gap-2 p-4 text-center">
-            <Film className="h-10 w-10 text-muted-foreground/50" />
-            <span className="text-xs">Sem pôster disponível</span>
+          <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-2 p-4 text-center">
+            <Film className="h-10 w-10 text-gray-600" />
+            <span className="text-xs">Sem pôster</span>
           </div>
         )}
 
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
 
-        {/* Type Badge */}
-        <div className="absolute top-3 left-3">
+        {/* Top Badges */}
+        <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10">
           <Badge
-            variant={media.type === 'ANIME' ? 'warning' : 'default'}
-            className="backdrop-blur-md shadow font-bold text-[10px] uppercase tracking-wider"
+            variant={media.type === 'ANIME' ? 'anime' : 'series'}
+            className="backdrop-blur-md py-0.5 px-2"
           >
             {media.type === 'ANIME' ? 'Anime' : media.type === 'MOVIE' ? 'Filme' : 'Série'}
           </Badge>
+
+          {/* Bookmark Button (visible on hover or when bookmarked) */}
+          <button
+            onClick={toggleBookmark}
+            aria-label="Salvar obra"
+            className={cn(
+              "bg-brand-dark/80 backdrop-blur-md p-1.5 rounded-lg text-gray-300 hover:text-white transition-opacity duration-200 border border-brand-border/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              bookmarked ? "opacity-100 text-brand-purple" : "opacity-0 group-hover:opacity-100"
+            )}
+          >
+            <Bookmark className={cn("h-3.5 w-3.5", bookmarked && "fill-brand-purple")} />
+          </button>
         </div>
 
-        {/* Hover Play / Recap CTA */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/40 backdrop-blur-xs">
-          <div className="h-12 w-12 rounded-full bg-purple-600/90 text-white flex items-center justify-center shadow-xl shadow-purple-500/40 transform scale-75 group-hover:scale-100 transition-transform">
-            <Play className="h-5 w-5 fill-white ml-0.5" />
-          </div>
-        </div>
-      </div>
-
-      {/* Info Content */}
-      <div className="p-4 flex flex-col flex-1 justify-between">
-        <div>
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-            <span>{media.releaseYear || 'Ano N/D'}</span>
-            <span className="flex items-center gap-1 text-purple-400 font-medium">
-              <Sparkles className="h-3 w-3" /> Recap com IA
-            </span>
-          </div>
-          <h3 className="font-bold text-foreground group-hover:text-purple-400 transition-colors line-clamp-1">
+        {/* Bottom Content Info */}
+        <div className="absolute bottom-0 inset-x-0 p-4 z-10 flex flex-col justify-end">
+          {media.releaseYear && (
+            <span className="text-[11px] text-gray-400 font-medium mb-1">{media.releaseYear}</span>
+          )}
+          <p className="font-bold text-sm sm:text-base text-white truncate group-hover:text-brand-purple transition-colors">
             {media.title}
-          </h3>
+          </p>
           {media.originalTitle && media.originalTitle !== media.title && (
-            <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{media.originalTitle}</p>
+            <p className="text-xs text-gray-400 truncate mt-0.5">{media.originalTitle}</p>
           )}
         </div>
-
-        <p className="text-xs text-muted-foreground line-clamp-2 mt-2 leading-relaxed">
-          {media.overview || 'Clique para ver o resumo completo das temporadas e episódios sem spoilers.'}
-        </p>
       </div>
     </Link>
   );

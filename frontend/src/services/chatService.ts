@@ -14,7 +14,7 @@ export const chatService = {
     onError: (err: Error) => void;
   }) => {
     try {
-      const response = await fetch('/chats/stream', {
+      const response = await fetch('http://localhost:8080/api/v1/chats/stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -33,13 +33,46 @@ export const chatService = {
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let done = false;
+      let buffer = '';
+      let currentEventData = '';
+      let hasDataInEvent = false;
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         if (value) {
-          const chunk = decoder.decode(value, { stream: true });
-          onChunk(chunk);
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
+
+          for (const line of lines) {
+            const trimmed = line.replace(/\r$/, '');
+            if (trimmed.startsWith('data:')) {
+              const dataChunk = trimmed.slice(5);
+              if (hasDataInEvent) {
+                currentEventData += '\n' + dataChunk;
+              } else {
+                currentEventData = dataChunk;
+                hasDataInEvent = true;
+              }
+            } else if (trimmed === '') {
+              if (hasDataInEvent) {
+                onChunk(currentEventData);
+                currentEventData = '';
+                hasDataInEvent = false;
+              }
+            }
+          }
+        }
+      }
+
+      if (hasDataInEvent) {
+        onChunk(currentEventData);
+      } else if (buffer.trim()) {
+        const trimmed = buffer.replace(/\r$/, '');
+        if (trimmed.startsWith('data:')) {
+          const dataChunk = trimmed.slice(5);
+          onChunk(dataChunk);
         }
       }
 

@@ -1,109 +1,135 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles, History, Flame } from 'lucide-react';
-import { SearchBar } from '@/components/common/SearchBar';
-import { MediaCard } from '@/components/media/MediaCard';
-import { useRecentStore } from '@/stores/useRecentStore';
+import { useLocation } from 'react-router-dom';
+import { HeroSection } from '@/components/landing/HeroSection';
+import { FeaturedHeroBanner } from '@/components/landing/FeaturedHeroBanner';
+import { MediaCarouselSection } from '@/components/media/MediaCarouselSection';
 import { MediaItem } from '@/types/media';
 import { mediaService } from '@/services/mediaService';
+import {
+  MOCK_TRENDING_MEDIAS,
+  MOCK_POPULAR_MEDIAS,
+  MOCK_TOP_RATED_MEDIAS,
+} from '@/mocks/homeSectionsMocks';
+
+/**
+ * Configuração declarativa das seções da Home.
+ * Para alterar as obras exibidas em uma seção ou adicionar novas seções,
+ * basta modificar ou incluir itens nesta lista alterando o `endpoint`.
+ */
+export interface HomeSectionConfig {
+  id: string;
+  title: string;
+  endpoint: string;
+  fallback: MediaItem[];
+}
+
+export const HOME_SECTIONS_CONFIG: HomeSectionConfig[] = [
+  {
+    id: 'trending',
+    title: 'Animes e Séries em alta no Brasil',
+    endpoint: '/v1/medias/trending',
+    fallback: MOCK_TRENDING_MEDIAS,
+  },
+  {
+    id: 'popular',
+    title: 'Obras Populares para Recapitular',
+    endpoint: '/v1/medias/popular',
+    fallback: MOCK_POPULAR_MEDIAS,
+  },
+  {
+    id: 'most-rated',
+    title: 'Mais Bem Avaliados',
+    endpoint: '/v1/medias/top-rated',
+    fallback: MOCK_TOP_RATED_MEDIAS,
+  },
+];
 
 export const HomePage: React.FC = () => {
-  const { recents } = useRecentStore();
-  const [popularMedias, setPopularMedias] = useState<MediaItem[]>([]);
-  const [loadingPopular, setLoadingPopular] = useState(true);
+  const [sectionsData, setSectionsData] = useState<
+    Record<string, { items: MediaItem[]; loading: boolean }>
+  >(() =>
+    HOME_SECTIONS_CONFIG.reduce(
+      (acc, s) => ({ ...acc, [s.id]: { items: [], loading: true } }),
+      {}
+    )
+  );
+
+  const location = useLocation();
+  const [activeFilter, setActiveFilter] = useState<string>('ALL');
 
   useEffect(() => {
-    // Carregar destaques populares iniciais
-    const fetchPopular = async () => {
+    // Carregamento dinâmico de cada seção configurada
+    HOME_SECTIONS_CONFIG.forEach(async (section) => {
       try {
-        const data = await mediaService.search('Attack on Titan');
-        const thrones = await mediaService.search('Game of Thrones');
-        const combined = [...(data.items || []), ...(thrones.items || [])].slice(0, 8);
-        setPopularMedias(combined);
+        const items = await mediaService.getByEndpoint(section.endpoint);
+        setSectionsData((prev) => ({
+          ...prev,
+          [section.id]: { items, loading: false },
+        }));
       } catch (e) {
-        console.warn('Erro ao carregar populares:', e);
-      } finally {
-        setLoadingPopular(false);
+        console.warn(
+          `[HomePage] Falha ao carregar endpoint ${section.endpoint}, utilizando fallback mock:`,
+          e
+        );
+        setSectionsData((prev) => ({
+          ...prev,
+          [section.id]: { items: [], loading: false },
+        }));
       }
-    };
-    fetchPopular();
+    });
   }, []);
 
+  useEffect(() => {
+    const hash = location.hash || window.location.hash;
+    if (hash) {
+      if (hash === '#search-section' || hash === '#search') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => {
+          const input = document.querySelector('#search-section input') as HTMLInputElement;
+          if (input) input.focus();
+        }, 400);
+      } else {
+        setTimeout(() => {
+          const el = document.querySelector(hash);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 300);
+      }
+    }
+  }, [location.hash]);
+
+  const trendingItems = sectionsData['trending']?.items || [];
+  const heroBannerItems =
+    trendingItems.length > 0 ? trendingItems : MOCK_TRENDING_MEDIAS;
+
   return (
-    <div className="space-y-12 pb-16">
-      {/* Hero Section */}
-      <section className="relative pt-12 pb-8 text-center px-4">
-        {/* Glow de fundo */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
+    <div className="space-y-12 pb-24">
+      {/* Hero Section Imersivo com Título, Pílulas de Filtro e Busca */}
+      <HeroSection
+        activeFilter={activeFilter}
+        onFilterChange={(filter) => setActiveFilter(filter)}
+      />
 
-        <div className="relative max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-600/10 border border-purple-500/30 text-purple-300 text-xs font-semibold">
-            <Sparkles className="h-3.5 w-3.5 text-purple-400 animate-spin" />
-            <span>Recapitule suas obras favoritas sem risco de spoilers</span>
-          </div>
+      {/* Banner Destaque (Spotlight Hero Banner com Slider) */}
+      <FeaturedHeroBanner items={heroBannerItems} />
 
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-foreground">
-            Lançou nova temporada e você{' '}
-            <span className="bg-gradient-to-r from-purple-400 via-indigo-300 to-pink-400 bg-clip-text text-transparent">
-              não lembra de nada?
-            </span>
-          </h1>
-
-          <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Consulte resumos estruturados por temporada e episódio, e converse com a IA com uma trava inteligente que impede spoilers do futuro da trama.
-          </p>
-
-          <div className="pt-4">
-            <SearchBar />
-          </div>
-        </div>
-      </section>
-
-      {/* Seção: Obras Recentes / Continuar de Onde Parou */}
-      {recents.length > 0 && (
-        <section className="container max-w-7xl mx-auto px-4 sm:px-8">
-          <div className="flex items-center gap-2.5 mb-5 text-purple-400">
-            <History className="h-5 w-5" />
-            <h2 className="text-xl font-bold text-foreground">Continuar de Onde Parou</h2>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-            {recents.map((item) => (
-              <MediaCard key={`recent-${item.type}-${item.externalId}`} media={item} />
-            ))}
-          </div>
+      {/* Seções de Categorias Configuradas Declarativamente */}
+      {HOME_SECTIONS_CONFIG.map((section) => (
+        <section
+          key={section.id}
+          className="container max-w-7xl mx-auto px-4 sm:px-6"
+        >
+          <MediaCarouselSection
+            id={section.id}
+            title={section.title}
+            items={sectionsData[section.id]?.items}
+            fallbackItems={section.fallback}
+            isLoading={sectionsData[section.id]?.loading}
+            activeFilter={activeFilter}
+          />
         </section>
-      )}
-
-      {/* Seção: Obras em Destaque */}
-      <section className="container max-w-7xl mx-auto px-4 sm:px-8">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2.5 text-purple-400">
-            <Flame className="h-5 w-5 text-orange-400" />
-            <h2 className="text-xl font-bold text-foreground">Obras em Alta para Recapitular</h2>
-          </div>
-          <span className="text-xs text-muted-foreground hidden sm:inline">
-            Séries & Animes populares
-          </span>
-        </div>
-
-        {loadingPopular ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-            {Array.from({ length: 5 }).map((_, idx) => (
-              <div key={idx} className="aspect-[2/3] rounded-2xl bg-muted/40 animate-pulse" />
-            ))}
-          </div>
-        ) : popularMedias.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-            {popularMedias.map((item) => (
-              <MediaCard key={`popular-${item.type}-${item.externalId}`} media={item} />
-            ))}
-          </div>
-        ) : (
-          <div className="p-8 rounded-2xl glass text-center text-sm text-muted-foreground">
-            Use a barra de pesquisa acima para encontrar qualquer anime, série ou filme!
-          </div>
-        )}
-      </section>
+      ))}
     </div>
   );
 };

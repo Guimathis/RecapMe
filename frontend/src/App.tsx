@@ -20,7 +20,7 @@ export const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <div className="flex flex-col min-h-screen bg-background text-foreground">
+        <div className="flex flex-col min-h-screen text-foreground relative">
           <Navbar />
           <div className="flex-1">
             <Routes>

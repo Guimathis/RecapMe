@@ -7,15 +7,10 @@ spring:
   config:
     import: optional:file:./backend/.env[.properties]
   datasource:
-    url: ${DB_URL}
-    driver-class-name: ${DB_DRIVER}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-
-  h2:
-    console:
-      enabled: false
-      path: /h2-console
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/recapme-db}
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
 
   jpa:
     hibernate:
@@ -32,8 +27,9 @@ spring:
       - search-medias
       - media-details
       - season-recaps
+      - home-sections
     caffeine:
-      spec: maximumSize=500,expireAfterWrite=30m
+      spec: maximumSize=500,expireAfterWrite=30m,recordStats
 
   ai:
     google:
@@ -41,20 +37,12 @@ spring:
         api-key: ${GOOGLE_GENAI_APIKEY}
         chat:
           model: gemini-3.5-flash-lite
-#    openai:
-#      api-key: ${OPENAI_API_KEY:demo-key}
-#      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
-#      chat:
-#        options:
-#          model: ${OPENAI_CHAT_MODEL:gpt-4o-mini}
-#          temperature: 0.7
 
 recapme:
-  tmdb:
-    base-url: https://api.themoviedb.org/3
-    api-key: ${TMDB_API_KEY:}
-  jikan:
-    base-url: https://api.jikan.moe/v4
+  anilist:
+    endpoint: ${ANILIST_GRAPHQL_URL:https://graphql.anilist.co}
+  kitsu:
+    endpoint: ${KITSU_GRAPHQL_URL:https://kitsu.app/api/graphql}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
 
@@ -73,4 +61,3 @@ logging:
   level:
     root: INFO
     com.recapme: DEBUG
-    org.springframework.ai: INFO

@@ -9,12 +9,14 @@ export interface ChatMessage {
 }
 
 export interface ChatStreamRequest {
-  externalId: string;
-  mediaType: MediaType;
-  title: string;
-  message: string;
-  seasonCutoff: number;
-  episodeCutoff: number;
+  mediaId: string;
+  userMessage: string;
+  upToSeasonNumber?: number;
+  upToEpisodeNumber?: number;
+  mediaType?: MediaType;
+  title?: string;
+  seasonCutoff?: number;
+  episodeCutoff?: number;
   history?: Array<{ role: string; content: string }>;
 }
 

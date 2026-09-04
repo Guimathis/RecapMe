@@ -1,28 +1,34 @@
 package com.recapme.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
-@Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "Resposta de confirmação do registro de feedback")
-public class SaveFeedbackResponseDto implements Serializable {
+@Schema(description = "Confirmação de recebimento de feedback")
+public record SaveFeedbackResponseDto(
+        @Schema(description = "Identificador único do feedback", example = "9ee95f64-5717-4562-b3fc-2c963f66af55")
+        UUID id,
 
-    @Schema(description = "ID único gerado para o feedback", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
-    private UUID id;
+        @Schema(description = "Identificador da mídia associada (se informado)", example = "7fa85f64-5717-4562-b3fc-2c963f66afa6")
+        UUID mediaId,
 
-    @Schema(description = "Status do processamento do feedback", example = "SUCCESS")
-    private String status;
+        @Schema(description = "Contexto avaliado", example = "RECAP")
+        String contextType,
 
-    @Schema(description = "Data e hora de criação do registro de feedback", example = "2026-08-28T09:15:30")
-    private LocalDateTime createdAt;
+        @Schema(description = "Avaliação informada", example = "POSITIVE")
+        String rating,
+
+        @Schema(description = "Comentário registrado", example = "Resumo muito preciso e sem spoilers!")
+        String comment,
+
+        @Schema(description = "Data e hora do registro")
+        Instant createdAt
+) implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
 }

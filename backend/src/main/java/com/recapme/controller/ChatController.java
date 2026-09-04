@@ -1,6 +1,6 @@
 package com.recapme.controller;
 
-import com.recapme.dto.request.ChatRequestDto;
+import com.recapme.dto.request.SendChatMessageRequestDto;
 import com.recapme.service.ChatAiService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,16 +20,16 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
 @RestController
-@RequestMapping("/chats")
+@RequestMapping("/api/v1/chats")
 @RequiredArgsConstructor
-@Tag(name = "Chat com IA", description = "Assistente de conversação com inteligência artificial e contenção de spoilers")
+@Tag(name = "Chat com IA Anti-Spoiler", description = "Assistente conversacional com IA e barreira contextual anti-spoiler")
 public class ChatController {
 
     private final ChatAiService chatAiService;
 
     @Operation(
             summary = "Transmitir resposta do assistente (Stream SSE)",
-            description = "Envia uma mensagem ao assistente inteligente para tirar dúvidas sobre a obra. A resposta é transmitida via Server-Sent Events (SSE / text/event-stream) respeitando rigorosamente os limites anti-spoiler configurados (seasonCutoff e episodeCutoff)."
+            description = "Envia uma mensagem ao assistente inteligente para tirar dúvidas sobre a obra. A resposta é transmitida via Server-Sent Events (SSE / text/event-stream) respeitando rigorosamente a barreira de spoiler informada (upToSeasonNumber e upToEpisodeNumber)."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -37,13 +37,13 @@ public class ChatController {
                     description = "Fluxo SSE de texto transmitido em tempo real com sucesso",
                     content = @Content(
                             mediaType = MediaType.TEXT_EVENT_STREAM_VALUE,
-                            schema = @Schema(type = "string", description = "Fragmentos de texto da resposta da IA gerados incrementalmente"),
-                            examples = @ExampleObject(value = "data: Olá! Até o episódio 9 da 1ª temporada...\n\n")
+                            schema = @Schema(type = "string", description = "Fragmentos incrementais de texto da resposta da IA"),
+                            examples = @ExampleObject(value = "data: Olá! Até a 1ª temporada, episódio 5...\n\n")
                     )
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Dados da requisição inválidos ou campos obrigatórios ausentes",
+                    description = "Dados da requisição inválidos",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProblemDetail.class))
             ),
             @ApiResponse(
@@ -55,10 +55,10 @@ public class ChatController {
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> streamChat(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Payload com parâmetros da pergunta, contexto da obra, histórico de chat e corte anti-spoiler",
+                    description = "Payload contendo a mensagem do usuário, identificador da obra e limites de spoiler",
                     required = true
             )
-            @RequestBody @Valid ChatRequestDto chatRequestDto) {
-        return chatAiService.streamChat(chatRequestDto);
+            @RequestBody @Valid SendChatMessageRequestDto sendChatMessageRequestDto) {
+        return chatAiService.streamChat(sendChatMessageRequestDto);
     }
 }

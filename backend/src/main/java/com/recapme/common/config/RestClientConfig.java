@@ -5,34 +5,47 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
+
+import java.time.Duration;
 
 @Configuration
 public class RestClientConfig {
 
-    @Value("${recapme.tmdb.base-url}")
-    private String tmdbBaseUrl;
+    @Value("${recapme.anilist.endpoint:https://graphql.anilist.co}")
+    private String anilistEndpoint;
 
-    @Value("${recapme.tmdb.api-key:}")
-    private String tmdbApiKey;
-
-    @Value("${recapme.jikan.base-url}")
-    private String jikanBaseUrl;
+    @Value("${recapme.kitsu.endpoint:https://kitsu.io/api/graphql}")
+    private String kitsuEndpoint;
 
     @Bean
-    public RestClient tmdbRestClient() {
+    public RestClient anilistRestClient() {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(Duration.ofSeconds(5));
+        requestFactory.setReadTimeout(Duration.ofSeconds(10));
+
         return RestClient.builder()
-                .baseUrl(tmdbBaseUrl)
+                .baseUrl(anilistEndpoint)
+                .requestFactory(requestFactory)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + tmdbApiKey)
+                .defaultHeader(HttpHeaders.USER_AGENT, "RecapMe/1.0 (https://recapme.app)")
                 .build();
     }
 
     @Bean
-    public RestClient jikanRestClient() {
+    public RestClient kitsuRestClient() {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(Duration.ofSeconds(5));
+        requestFactory.setReadTimeout(Duration.ofSeconds(10));
+
         return RestClient.builder()
-                .baseUrl(jikanBaseUrl)
+                .baseUrl(kitsuEndpoint)
+                .requestFactory(requestFactory)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader(HttpHeaders.USER_AGENT, "RecapMe/1.0 (https://recapme.app)")
                 .build();
     }
 }

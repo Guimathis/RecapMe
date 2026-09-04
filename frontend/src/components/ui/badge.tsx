@@ -13,9 +13,12 @@ const badgeVariants = cva(
           "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive:
           "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
-        outline: "text-foreground",
+        outline: "text-foreground border-brand-border",
         success: "border-transparent bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
         warning: "border-transparent bg-amber-500/15 text-amber-400 border border-amber-500/30",
+        anime: "border-brand-purple/40 bg-brand-purple/20 text-brand-purple font-bold text-[10px] uppercase tracking-wider",
+        series: "border-brand-orange/40 bg-brand-orange/20 text-brand-orange font-bold text-[10px] uppercase tracking-wider",
+        movie: "border-brand-orange/40 bg-brand-orange/20 text-brand-orange font-bold text-[10px] uppercase tracking-wider",
       },
     },
     defaultVariants: {

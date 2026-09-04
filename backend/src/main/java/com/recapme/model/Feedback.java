@@ -1,12 +1,11 @@
 package com.recapme.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
+import java.io.Serial;
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -14,8 +13,11 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-public class FeedbackModel implements Serializable {
+@AllArgsConstructor
+@Builder
+public class Feedback implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Id
@@ -23,7 +25,7 @@ public class FeedbackModel implements Serializable {
     @Column(name = "id", nullable = false)
     private UUID id;
 
-    @Column(name = "media_id", nullable = true)
+    @Column(name = "media_id")
     private UUID mediaId;
 
     @Column(name = "context_type", nullable = false, length = 32)
@@ -32,9 +34,16 @@ public class FeedbackModel implements Serializable {
     @Column(name = "rating", nullable = false, length = 16)
     private String rating;
 
-    @Column(name = "comment", nullable = true, columnDefinition = "TEXT")
+    @Column(name = "comment", columnDefinition = "TEXT")
     private String comment;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private Instant createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.createdAt == null) {
+            this.createdAt = Instant.now();
+        }
+    }
 }

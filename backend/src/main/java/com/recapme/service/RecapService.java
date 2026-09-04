@@ -1,170 +1,202 @@
 package com.recapme.service;
 
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.ObjectMapper;
-import com.recapme.dto.response.EpisodeItemDto;
+import com.recapme.common.exception.ResourceNotFoundException;
+import com.recapme.dto.request.SaveRecapRequestDto;
 import com.recapme.dto.response.OneRecapResponseDto;
-import com.recapme.model.EpisodeRecapModel;
-import com.recapme.model.MediaModel;
-import com.recapme.model.MediaType;
-import com.recapme.model.SeasonRecapModel;
-import com.recapme.repository.EpisodeRecapRepository;
-import com.recapme.repository.SeasonRecapRepository;
+import com.recapme.dto.response.SaveRecapResponseDto;
+import com.recapme.model.Episode;
+import com.recapme.model.Media;
+import com.recapme.model.Recap;
+import com.recapme.model.Season;
+import com.recapme.repository.EpisodeRepository;
+import com.recapme.repository.MediaRepository;
+import com.recapme.repository.RecapRepository;
+import com.recapme.repository.SeasonRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class RecapService {
 
-    private final MediaService mediaService;
-    private final SeasonRecapRepository seasonRecapRepository;
-    private final EpisodeRecapRepository episodeRecapRepository;
-    private final ObjectMapper objectMapper;
+    private final RecapRepository recapRepository;
+    private final MediaRepository mediaRepository;
+    private final SeasonRepository seasonRepository;
+    private final EpisodeRepository episodeRepository;
+    private final RecapAiService recapAiService;
+
+    @Transactional(readOnly = true)
+    public OneRecapResponseDto getRecap(UUID mediaId, UUID seasonId, UUID episodeId) {
+        if (!mediaRepository.existsById(mediaId)) {
+            throw new ResourceNotFoundException("Media with identifier '" + mediaId + "' was not found");
+        }
+
+        Optional<Recap> recapOpt = findExistingRecap(mediaId, seasonId, episodeId);
+
+        Recap recap = recapOpt.orElseThrow(() -> new ResourceNotFoundException(
+                "Recap was not found for mediaId=" + mediaId +
+                (seasonId != null ? ", seasonId=" + seasonId : "") +
+                (episodeId != null ? ", episodeId=" + episodeId : "")
+        ));
+
+        return toOneRecapResponseDto(recap);
+    }
 
     @Transactional
-    @Cacheable(value = "season-recaps", key = "#type.name() + '-' + #externalId + '-' + #seasonNumber")
-    public OneRecapResponseDto getSeasonRecap(MediaType type, String externalId, Integer seasonNumber) {
-        int season = (seasonNumber != null && seasonNumber > 0) ? seasonNumber : 1;
-        MediaModel media = mediaService.getOrSaveMedia(type, externalId, null);
+    public SaveRecapResponseDto createRecap(SaveRecapRequestDto request) {
+        Media media = mediaRepository.findById(request.mediaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Media with identifier '" + request.mediaId() + "' was not found"));
 
-        var existingRecap = seasonRecapRepository.findByMediaIdAndSeasonNumber(media.getId(), season);
-        if (existingRecap.isPresent()) {
-            return toOneRecapResponseDto(media, existingRecap.get());
+        Season season = null;
+        if (request.seasonId() != null) {
+            season = seasonRepository.findById(request.seasonId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Season with identifier '" + request.seasonId() + "' was not found"));
         }
 
-        // Criar ou sintetizar resumo base inicial para o MVP
-        SeasonRecapModel newSeason = new SeasonRecapModel();
-        newSeason.setMedia(media);
-        newSeason.setSeasonNumber(season);
-        newSeason.setTitle("Temporada " + season);
-        newSeason.setSummary(generateInitialSummary(media, season));
-        newSeason.setKeyTakeaways(serializeList(List.of(
-                "Apresentação dos personagens centrais e premissa da trama.",
-                "Desenvolvimento dos conflitos e alianças iniciais.",
-                "Clímax da temporada e definição dos próximos desafios."
-        )));
-        newSeason.setCreatedAt(LocalDateTime.now());
-        newSeason.setUpdatedAt(LocalDateTime.now());
-
-        SeasonRecapModel savedSeason;
-        try {
-            savedSeason = seasonRecapRepository.save(newSeason);
-        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
-            log.info("SeasonRecap media {} season {} já persistido por requisição concorrente.", media.getId(), season);
-            return seasonRecapRepository.findByMediaIdAndSeasonNumber(media.getId(), season)
-                    .map(s -> toOneRecapResponseDto(media, s))
-                    .orElseThrow(() -> ex);
+        Episode episode = null;
+        if (request.episodeId() != null) {
+            episode = episodeRepository.findById(request.episodeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Episode with identifier '" + request.episodeId() + "' was not found"));
         }
 
-        // Gerar episódios base
-        int episodeCount = Math.min(media.getTotalEpisodes() != null ? media.getTotalEpisodes() : 10, 12);
-        for (int ep = 1; ep <= episodeCount; ep++) {
-            EpisodeRecapModel epModel = new EpisodeRecapModel();
-            epModel.setSeasonRecap(savedSeason);
-            epModel.setEpisodeNumber(ep);
-            epModel.setTitle("Episódio " + ep);
-            epModel.setSummary("Acontecimentos e revelações do episódio " + ep + " da obra " + media.getTitle() + ".");
-            epModel.setKeyEvents(serializeList(List.of("Evento marcante do episódio " + ep)));
-            epModel.setCreatedAt(LocalDateTime.now());
-            epModel.setUpdatedAt(LocalDateTime.now());
+        UUID mediaId = media.getId();
+        UUID seasonId = season != null ? season.getId() : null;
+        UUID episodeId = episode != null ? episode.getId() : null;
+
+        // Check if recap already exists
+        Optional<Recap> existing = findExistingRecap(mediaId, seasonId, episodeId);
+        if (existing.isPresent()) {
+            return toSaveRecapResponseDto(existing.get());
+        }
+
+        // JVM lock based on entity identifiers to serialize concurrent synthesis for the exact same scope
+        String lockKey = (mediaId + ":" + (seasonId != null ? seasonId : "null") + ":" + (episodeId != null ? episodeId : "null")).intern();
+        synchronized (lockKey) {
+            existing = findExistingRecap(mediaId, seasonId, episodeId);
+            if (existing.isPresent()) {
+                return toSaveRecapResponseDto(existing.get());
+            }
+
+            // Generate content with AI
+            String content = recapAiService.generateRecap(
+                    media,
+                    season,
+                    episode,
+                    request.targetType(),
+                    request.spoilerLevel()
+            );
+
+            Recap recap = Recap.builder()
+                    .media(media)
+                    .season(season)
+                    .episode(episode)
+                    .targetType(request.targetType().toUpperCase())
+                    .spoilerLevel(request.spoilerLevel())
+                    .content(content)
+                    .createdAt(Instant.now())
+                    .build();
+
             try {
-                episodeRecapRepository.save(epModel);
-            } catch (org.springframework.dao.DataIntegrityViolationException ignored) {
-                // Episódio já persistido concorrentemente
+                Recap saved = recapRepository.save(recap);
+                return toSaveRecapResponseDto(saved);
+            } catch (Exception e) {
+                // If another concurrent thread committed in the meantime, return the existing record
+                Optional<Recap> foundAfterConflict = findExistingRecap(mediaId, seasonId, episodeId);
+                if (foundAfterConflict.isPresent()) {
+                    return toSaveRecapResponseDto(foundAfterConflict.get());
+                }
+                if (e instanceof RuntimeException re) {
+                    throw re;
+                }
+                throw new RuntimeException("Failed to persist recap: " + e.getMessage(), e);
             }
         }
+    }
 
-        return toOneRecapResponseDto(media, savedSeason);
+    private Optional<Recap> findExistingRecap(UUID mediaId, UUID seasonId, UUID episodeId) {
+        if (episodeId != null) {
+            return recapRepository.findFirstByMediaIdAndSeasonIdAndEpisodeIdOrderByCreatedAtDesc(mediaId, seasonId, episodeId);
+        } else if (seasonId != null) {
+            return recapRepository.findFirstByMediaIdAndSeasonIdAndEpisodeIdIsNullOrderByCreatedAtDesc(mediaId, seasonId);
+        } else {
+            return recapRepository.findFirstByMediaIdAndSeasonIdIsNullAndEpisodeIdIsNullOrderByCreatedAtDesc(mediaId);
+        }
     }
 
     @Transactional(readOnly = true)
-    public String getAuthorizedContext(MediaType type, String externalId, Integer seasonCutoff, Integer episodeCutoff) {
-        var mediaOpt = mediaService.getOrSaveMedia(type, externalId, null);
-        if (mediaOpt == null) {
-            return "Informações básicas da obra.";
+    public String getAuthorizedContext(UUID mediaId, Integer upToSeasonNumber, Integer upToEpisodeNumber) {
+        Media media = mediaRepository.findById(mediaId).orElse(null);
+        if (media == null) {
+            return "Informações da obra indisponíveis.";
         }
 
-        StringBuilder contextBuilder = new StringBuilder();
-        contextBuilder.append("Obra: ").append(mediaOpt.getTitle()).append("\n");
-        if (mediaOpt.getOverview() != null) {
-            contextBuilder.append("Sinopse Geral: ").append(mediaOpt.getOverview()).append("\n\n");
+        int maxSeason = (upToSeasonNumber != null && upToSeasonNumber > 0) ? upToSeasonNumber : 1;
+        int maxEpisode = (upToEpisodeNumber != null && upToEpisodeNumber > 0) ? upToEpisodeNumber : 1;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Obra: ").append(media.getTitleRomaji());
+        if (media.getTitleEnglish() != null) {
+            sb.append(" (").append(media.getTitleEnglish()).append(")");
+        }
+        sb.append("\n");
+
+        if (media.getSynopsis() != null) {
+            sb.append("Sinopse: ").append(media.getSynopsis()).append("\n\n");
         }
 
-        List<SeasonRecapModel> seasons = seasonRecapRepository.findByMediaIdOrderBySeasonNumberAsc(mediaOpt.getId());
-        for (SeasonRecapModel season : seasons) {
-            if (season.getSeasonNumber() <= seasonCutoff) {
-                contextBuilder.append("== Temporada ").append(season.getSeasonNumber()).append(" ==\n");
-                contextBuilder.append(season.getSummary()).append("\n");
+        List<Season> seasons = seasonRepository.findByMediaIdOrderBySeasonNumberAsc(mediaId);
+        for (Season season : seasons) {
+            if (season.getSeasonNumber() <= maxSeason) {
+                sb.append("== Temporada ").append(season.getSeasonNumber()).append(": ").append(season.getTitle()).append(" ==\n");
 
-                List<EpisodeRecapModel> episodes = episodeRecapRepository.findBySeasonRecapIdOrderByEpisodeNumberAsc(season.getId());
-                for (EpisodeRecapModel ep : episodes) {
-                    if (season.getSeasonNumber() < seasonCutoff || ep.getEpisodeNumber() <= episodeCutoff) {
-                        contextBuilder.append("  - Ep. ").append(ep.getEpisodeNumber()).append(" (")
-                                .append(ep.getTitle()).append("): ").append(ep.getSummary()).append("\n");
+                List<Episode> episodes = episodeRepository.findBySeasonIdOrderByEpisodeNumberAsc(season.getId());
+                for (Episode ep : episodes) {
+                    if (season.getSeasonNumber() < maxSeason || ep.getEpisodeNumber() <= maxEpisode) {
+                        sb.append("  - Ep. ").append(ep.getEpisodeNumber()).append(": ").append(ep.getTitle());
+                        if (ep.getSynopsis() != null && !ep.getSynopsis().isBlank()) {
+                            sb.append(" — ").append(ep.getSynopsis());
+                        }
+                        sb.append("\n");
                     }
                 }
-                contextBuilder.append("\n");
+                sb.append("\n");
             }
         }
 
-        return contextBuilder.toString();
+        return sb.toString();
     }
 
-    private String generateInitialSummary(MediaModel media, int season) {
-        if (media.getOverview() != null && !media.getOverview().isBlank()) {
-            return "Resumo da " + season + "ª temporada de " + media.getTitle() + ": " + media.getOverview();
-        }
-        return "Resumo da temporada " + season + " de " + media.getTitle() + ".";
-    }
-
-    private OneRecapResponseDto toOneRecapResponseDto(MediaModel media, SeasonRecapModel season) {
-        List<EpisodeRecapModel> episodes = episodeRecapRepository.findBySeasonRecapIdOrderByEpisodeNumberAsc(season.getId());
-        List<EpisodeItemDto> episodeDtos = episodes.stream()
-                .map(ep -> EpisodeItemDto.builder()
-                        .episodeNumber(ep.getEpisodeNumber())
-                        .title(ep.getTitle())
-                        .summary(ep.getSummary())
-                        .keyEvents(deserializeList(ep.getKeyEvents()))
-                        .build())
-                .collect(Collectors.toList());
-
+    private OneRecapResponseDto toOneRecapResponseDto(Recap recap) {
         return OneRecapResponseDto.builder()
-                .mediaId(media.getId().toString())
-                .externalId(media.getExternalId())
-                .mediaType(media.getMediaType())
-                .mediaTitle(media.getTitle())
-                .seasonNumber(season.getSeasonNumber())
-                .seasonTitle(season.getTitle())
-                .seasonSummary(season.getSummary())
-                .keyTakeaways(deserializeList(season.getKeyTakeaways()))
-                .episodes(episodeDtos)
+                .id(recap.getId())
+                .mediaId(recap.getMedia().getId())
+                .seasonId(recap.getSeason() != null ? recap.getSeason().getId() : null)
+                .episodeId(recap.getEpisode() != null ? recap.getEpisode().getId() : null)
+                .targetType(recap.getTargetType())
+                .spoilerLevel(recap.getSpoilerLevel())
+                .content(recap.getContent())
+                .createdAt(recap.getCreatedAt())
                 .build();
     }
 
-    private String serializeList(List<String> list) {
-        try {
-            return objectMapper.writeValueAsString(list);
-        } catch (Exception e) {
-            return "[]";
-        }
-    }
-
-    private List<String> deserializeList(String json) {
-        if (json == null || json.isBlank()) return List.of();
-        try {
-            return objectMapper.readValue(json, new TypeReference<List<String>>() {});
-        } catch (Exception e) {
-            return List.of();
-        }
+    private SaveRecapResponseDto toSaveRecapResponseDto(Recap recap) {
+        return SaveRecapResponseDto.builder()
+                .id(recap.getId())
+                .mediaId(recap.getMedia().getId())
+                .seasonId(recap.getSeason() != null ? recap.getSeason().getId() : null)
+                .episodeId(recap.getEpisode() != null ? recap.getEpisode().getId() : null)
+                .targetType(recap.getTargetType())
+                .spoilerLevel(recap.getSpoilerLevel())
+                .content(recap.getContent())
+                .createdAt(recap.getCreatedAt())
+                .build();
     }
 }

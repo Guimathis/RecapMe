@@ -1,5 +1,6 @@
 import React from 'react';
-import { Sparkles, CheckCircle, BookOpen } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import { CheckCircle, BookOpen } from 'lucide-react';
 import { SeasonRecap } from '@/types/recap';
 
 interface SeasonRecapTabProps {
@@ -7,37 +8,38 @@ interface SeasonRecapTabProps {
 }
 
 export const SeasonRecapTab: React.FC<SeasonRecapTabProps> = ({ recap }) => {
+  const recapText = recap.content || recap.seasonSummary || '';
+
   return (
     <div className="space-y-6">
       {/* Resumo Geral da Temporada */}
-      <div className="rounded-2xl glass-card p-6 border border-border/60 shadow-lg">
-        <div className="flex items-center gap-2 mb-3 text-purple-400">
+      <div className="rounded-2xl bg-brand-card p-6 md:p-8 border border-brand-border shadow-2xl">
+        <div className="flex items-center gap-2.5 mb-4 text-brand-purple">
           <BookOpen className="h-5 w-5" />
-          <h3 className="text-lg font-bold text-foreground">
+          <h3 className="text-xl font-bold text-white">
             Visão Geral — Temporada {recap.seasonNumber}
           </h3>
         </div>
-        <p className="text-sm sm:text-base text-muted-foreground leading-relaxed whitespace-pre-line">
-          {recap.seasonSummary}
-        </p>
+        <div className="text-sm sm:text-base text-gray-300 leading-relaxed font-light prose prose-invert max-w-none prose-p:leading-relaxed prose-headings:text-white prose-strong:text-white prose-ul:my-2">
+          <ReactMarkdown>{recapText}</ReactMarkdown>
+        </div>
       </div>
 
       {/* Pontos-Chave / Principais Revelações (Key Takeaways) */}
       {recap.keyTakeaways && recap.keyTakeaways.length > 0 && (
-        <div className="rounded-2xl glass-card p-6 border border-purple-500/20 shadow-lg bg-gradient-to-br from-purple-950/20 to-transparent">
-          <div className="flex items-center gap-2 mb-4 text-purple-400">
-            <Sparkles className="h-5 w-5" />
-            <h4 className="text-base font-bold text-foreground">
+        <div className="rounded-2xl bg-brand-card p-6 md:p-8 border border-brand-border shadow-2xl">
+          <div className="mb-5">
+            <h4 className="text-lg font-bold text-white">
               Pontos Cruciais que Você Precisa Lembrar
             </h4>
           </div>
-          <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {recap.keyTakeaways.map((point, index) => (
               <li
                 key={index}
-                className="flex items-start gap-2.5 p-3 rounded-xl bg-background/50 border border-border/40 text-xs sm:text-sm text-muted-foreground"
+                className="flex items-start gap-3 p-4 rounded-xl bg-brand-inset border border-brand-border text-xs sm:text-sm text-gray-300 leading-relaxed font-light"
               >
-                <CheckCircle className="h-4 w-4 text-purple-400 shrink-0 mt-0.5" />
+                <CheckCircle className="h-4 w-4 text-brand-purple shrink-0 mt-0.5" />
                 <span>{point}</span>
               </li>
             ))}
