@@ -1,5 +1,6 @@
 package com.recapme.dto.response;
 
+import com.recapme.model.Episode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
